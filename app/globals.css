@@ -12,8 +12,10 @@
   --font-mono: var(--font-geist-mono);
 
   --color-sollos-teal: #00616c;
-  --color-sollos-teal-dark: #00464e;
-  --color-sollos-teal-light: #e0f0f1;
+  --color-sollos-navy: #002a53;
+  --color-sollos-navy-dark: #00182f;
+  --color-sollos-cream: #fef6e8;
+  --color-sollos-sky: #d5eef6;
   --color-sollos-orange: #ff6b00;
   --color-sollos-yellow: #ffd100;
 }

@@ -7,7 +7,7 @@ import type { StoreLocation } from "@/lib/locations";
 
 const pinIcon = L.divIcon({
   className: "",
-  html: `<div style="width:16px;height:16px;border-radius:50%;background:rgb(0,97,108);border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)"></div>`,
+  html: `<div style="width:16px;height:16px;border-radius:50%;background:#002a53;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)"></div>`,
   iconSize: [16, 16],
   iconAnchor: [8, 8],
   popupAnchor: [0, -8],
@@ -42,7 +42,7 @@ export function MapView({ locations }: { locations: StoreLocation[] }) {
                   href={loc.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sollos-teal underline"
+                  className="text-sollos-navy underline"
                 >
                   Website
                 </a>

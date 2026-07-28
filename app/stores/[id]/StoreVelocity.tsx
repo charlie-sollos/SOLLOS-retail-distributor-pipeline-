@@ -11,6 +11,7 @@ import {
   toneStyle,
   type VelocityEntry,
 } from "@/lib/velocity";
+import { VelocityChart } from "./VelocityChart";
 
 export function StoreVelocity({
   storeId,
@@ -76,6 +77,12 @@ export function StoreVelocity({
         <Stat label="Est. Cases / Week" value={casesPerWeek} />
         <Stat label="Total Gross Profit" value={`$${summary.totalGrossProfit.toFixed(2)}`} />
       </div>
+
+      {entries.length >= 2 && (
+        <div className="mb-6">
+          <VelocityChart entries={entries} />
+        </div>
+      )}
 
       {entries.length > 0 && (
         <div className="mb-6 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
@@ -157,7 +164,7 @@ export function StoreVelocity({
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full rounded-md bg-sollos-teal px-3 py-1.5 text-sm font-medium text-white hover:bg-sollos-teal-dark"
+              className="w-full rounded-md bg-sollos-navy px-3 py-1.5 text-sm font-medium text-white hover:bg-sollos-navy-dark"
             >
               Add
             </button>

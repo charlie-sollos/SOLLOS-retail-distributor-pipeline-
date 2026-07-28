@@ -57,23 +57,25 @@ export default function Home() {
   const filtersActive = search !== "" || stateFilter !== "All" || dataFilter !== "All";
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
+    <div className="flex flex-1 flex-col bg-sollos-cream dark:bg-black">
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:px-10">
-        <header className="mb-10">
-          <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
-            SOLLOS Pipeline
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Live stockist locations and product velocity
-          </p>
-        </header>
+        <div className="mb-10 rounded-2xl bg-gradient-to-b from-sollos-sky to-transparent px-6 py-8 dark:from-sollos-navy/30 dark:to-transparent sm:px-8">
+          <header className="mb-8">
+            <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
+              SOLLOS Pipeline
+            </h1>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              Live stockist locations and product velocity
+            </p>
+          </header>
 
-        <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat label="Live Stores" value={rows.length} />
-          <Stat label="With Velocity Data" value={withData.length} />
-          <Stat label="Need Data" value={needData} />
-          <Stat label="Total Units Sold" value={totalUnits} />
-        </section>
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Stat label="Live Stores" value={rows.length} />
+            <Stat label="With Velocity Data" value={withData.length} />
+            <Stat label="Need Data" value={needData} />
+            <Stat label="Total Units Sold" value={totalUnits} />
+          </section>
+        </div>
 
         <section className="mb-10">
           <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">Leaderboard</h2>
@@ -86,7 +88,7 @@ export default function Home() {
           ) : (
             <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
               <table className="w-full text-left text-sm">
-                <thead className="bg-sollos-teal text-xs uppercase tracking-wide text-white">
+                <thead className="bg-sollos-navy text-xs uppercase tracking-wide text-white">
                   <tr>
                     <th className="px-4 py-3 font-medium">Rank</th>
                     <th className="px-4 py-3 font-medium">Store</th>
@@ -100,7 +102,7 @@ export default function Home() {
                     <tr key={row.loc.id} className="bg-white dark:bg-black">
                       <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">{i + 1}</td>
                       <td className="px-4 py-3 font-medium text-black dark:text-zinc-50">
-                        <Link href={`/stores/${row.loc.id}`} className="hover:text-sollos-teal hover:underline dark:hover:text-sollos-yellow">
+                        <Link href={`/stores/${row.loc.id}`} className="hover:text-sollos-navy hover:underline dark:hover:text-sollos-yellow">
                           {row.loc.name}
                         </Link>
                       </td>
@@ -139,12 +141,12 @@ export default function Home() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by store or city"
-              className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black placeholder:text-zinc-400 focus:border-sollos-teal focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black placeholder:text-zinc-400 focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
             <select
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black focus:border-sollos-teal focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             >
               {states.map((s) => (
                 <option key={s} value={s}>
@@ -155,7 +157,7 @@ export default function Home() {
             <select
               value={dataFilter}
               onChange={(e) => setDataFilter(e.target.value as DataFilter)}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black focus:border-sollos-teal focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             >
               {DATA_FILTERS.map((f) => (
                 <option key={f} value={f}>
@@ -170,7 +172,7 @@ export default function Home() {
                   setStateFilter("All");
                   setDataFilter("All");
                 }}
-                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:border-sollos-teal hover:text-sollos-teal dark:border-zinc-700 dark:text-zinc-400"
+                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:border-sollos-navy hover:text-sollos-navy dark:border-zinc-700 dark:text-zinc-400"
               >
                 Clear
               </button>
@@ -200,10 +202,10 @@ export default function Home() {
                   filteredRows.map((row) => (
                     <tr
                       key={row.loc.id}
-                      className="bg-white hover:bg-sollos-teal-light dark:bg-black dark:hover:bg-zinc-950"
+                      className="bg-white hover:bg-sollos-sky dark:bg-black dark:hover:bg-zinc-950"
                     >
                       <td className="px-4 py-3 font-medium text-black dark:text-zinc-50">
-                        <Link href={`/stores/${row.loc.id}`} className="hover:text-sollos-teal hover:underline dark:hover:text-sollos-yellow">
+                        <Link href={`/stores/${row.loc.id}`} className="hover:text-sollos-navy hover:underline dark:hover:text-sollos-yellow">
                           {row.loc.name}
                         </Link>
                       </td>
@@ -242,7 +244,7 @@ export default function Home() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 border-t-2 border-t-sollos-teal dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 border-t-2 border-t-sollos-navy dark:border-zinc-800 dark:bg-zinc-950">
       <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{label}</p>
       <p className="mt-1 text-2xl font-semibold text-black dark:text-zinc-50">{value}</p>
     </div>

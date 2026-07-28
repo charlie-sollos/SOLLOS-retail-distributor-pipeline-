@@ -14,7 +14,7 @@ export function Header() {
 
   return (
     <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-black">
-      <div className="h-1 bg-gradient-to-r from-sollos-teal via-sollos-orange to-sollos-yellow" />
+      <div className="h-1 bg-gradient-to-r from-sollos-navy via-sollos-orange to-sollos-yellow" />
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-2 sm:px-10">
         <Link href="/" className="flex items-center">
           <Image src="/logo/sollos-wordmark.svg" alt="SOLLOS" width={150} height={34} priority />
@@ -28,8 +28,8 @@ export function Header() {
                 href={link.href}
                 className={
                   active
-                    ? "font-semibold text-sollos-teal dark:text-sollos-yellow"
-                    : "hover:text-sollos-teal dark:hover:text-sollos-yellow"
+                    ? "font-semibold text-sollos-navy dark:text-sollos-yellow"
+                    : "hover:text-sollos-navy dark:hover:text-sollos-yellow"
                 }
               >
                 {link.label}

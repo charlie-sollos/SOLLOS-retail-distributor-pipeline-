@@ -17,18 +17,18 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
   const seedEntries = getSeedEntries(store.id);
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
+    <div className="flex flex-1 flex-col bg-sollos-cream dark:bg-black">
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:px-10">
         <Link
           href="/"
-          className="mb-6 inline-block text-sm text-zinc-500 hover:text-sollos-teal hover:underline dark:text-zinc-400 dark:hover:text-sollos-yellow"
+          className="mb-6 inline-block text-sm text-zinc-500 hover:text-sollos-navy hover:underline dark:text-zinc-400 dark:hover:text-sollos-yellow"
         >
           ← Back to Pipeline
         </Link>
 
         <header className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
               {store.name}
             </h1>
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
@@ -42,12 +42,12 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
                   href={store.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sollos-teal underline dark:text-sollos-yellow"
+                  className="text-sollos-navy underline dark:text-sollos-yellow"
                 >
                   Website
                 </a>
               )}
-              <Link href="/map" className="text-sollos-teal underline dark:text-sollos-yellow">
+              <Link href="/map" className="text-sollos-navy underline dark:text-sollos-yellow">
                 View on map
               </Link>
             </div>

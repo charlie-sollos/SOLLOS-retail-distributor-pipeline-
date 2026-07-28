@@ -50,7 +50,7 @@ export type Signal = { label: string; tone: SignalTone };
 
 export const toneStyle: Record<SignalTone, string> = {
   growing: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-  steady: "bg-sollos-teal-light text-sollos-teal dark:bg-sollos-teal/20 dark:text-sollos-teal-light",
+  steady: "bg-sollos-sky text-sollos-navy dark:bg-sollos-navy/40 dark:text-sollos-sky",
   declining: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   "no-data": "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
 };
