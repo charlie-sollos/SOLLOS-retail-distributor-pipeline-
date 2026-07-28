@@ -73,3 +73,30 @@ export function trendSignal(entries: VelocityEntry[]): Signal {
 export function weeklyCasesEstimate(avgUnitsPerDay: number): number {
   return Math.round(((avgUnitsPerDay * 7) / PRICING.caseSize) * 100) / 100;
 }
+
+export type WeeklyAggregate = {
+  weekStart: string;
+  weekEnd: string;
+  unitsSold: number;
+  revenue: number;
+};
+
+export function aggregateByWeek(allEntries: VelocityEntry[]): WeeklyAggregate[] {
+  const byWeek = new Map<string, WeeklyAggregate>();
+  for (const e of allEntries) {
+    const existing = byWeek.get(e.weekStart);
+    if (existing) {
+      existing.unitsSold += e.unitsSold;
+      existing.revenue += e.revenue;
+      if (e.weekEnd > existing.weekEnd) existing.weekEnd = e.weekEnd;
+    } else {
+      byWeek.set(e.weekStart, {
+        weekStart: e.weekStart,
+        weekEnd: e.weekEnd,
+        unitsSold: e.unitsSold,
+        revenue: e.revenue,
+      });
+    }
+  }
+  return Array.from(byWeek.values()).sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+}

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { locations, normalizeState } from "@/lib/locations";
 import { getMergedEntries } from "@/lib/storeStorage";
-import { summarize, trendSignal, weeklyCasesEstimate, toneStyle } from "@/lib/velocity";
+import { summarize, trendSignal, weeklyCasesEstimate, aggregateByWeek, toneStyle } from "@/lib/velocity";
+import { SalesChart } from "@/components/SalesChart";
 
 const DATA_FILTERS = ["All", "Has Data", "Needs Data"] as const;
 type DataFilter = (typeof DATA_FILTERS)[number];
@@ -50,6 +51,7 @@ export default function Home() {
   const withData = rows.filter((r) => r.entries.length > 0);
   const needData = rows.length - withData.length;
   const totalUnits = withData.reduce((sum, r) => sum + r.summary.totalUnits, 0);
+  const weeklySales = useMemo(() => aggregateByWeek(rows.flatMap((r) => r.entries)), [rows]);
   const leaderboard = [...filteredRows]
     .filter((r) => r.entries.length > 0)
     .sort((a, b) => b.summary.avgUnitsPerDay - a.summary.avgUnitsPerDay);
@@ -76,6 +78,13 @@ export default function Home() {
             <Stat label="Total Units Sold" value={totalUnits} />
           </section>
         </div>
+
+        {weeklySales.length >= 2 && (
+          <section className="mb-10">
+            <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">Sales</h2>
+            <SalesChart weeklySales={weeklySales} />
+          </section>
+        )}
 
         <section className="mb-10">
           <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">Leaderboard</h2>

@@ -1,6 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { StoreLocation } from "@/lib/locations";
@@ -13,16 +14,34 @@ const pinIcon = L.divIcon({
   popupAnchor: [0, -8],
 });
 
+function FitBounds({ locations }: { locations: StoreLocation[] }) {
+  const map = useMap();
+  const boundsKey = locations
+    .map((l) => l.id)
+    .sort()
+    .join(",");
+
+  useEffect(() => {
+    if (locations.length === 0) return;
+    const bounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lng] as [number, number]));
+    map.fitBounds(bounds, { padding: [30, 30] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, boundsKey]);
+
+  return null;
+}
+
 export function MapView({ locations }: { locations: StoreLocation[] }) {
-  const bounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lng] as [number, number]));
+  const initialBounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lng] as [number, number]));
 
   return (
     <MapContainer
-      bounds={bounds}
+      bounds={initialBounds}
       boundsOptions={{ padding: [30, 30] }}
       scrollWheelZoom
       className="h-[70vh] w-full rounded-lg border border-zinc-200 dark:border-zinc-800"
     >
+      <FitBounds locations={locations} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
