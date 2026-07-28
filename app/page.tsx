@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { locations, normalizeState } from "@/lib/locations";
-import { getMergedEntries } from "@/lib/storeStorage";
+import { getMergedEntries, getEffectiveLocation } from "@/lib/storeStorage";
 import { summarize, trendSignal, weeklyCasesEstimate, aggregateByWeek, toneStyle } from "@/lib/velocity";
+import { loadPricing } from "@/lib/pricing";
 import { SalesChart } from "@/components/SalesChart";
 
 const DATA_FILTERS = ["All", "Has Data", "Needs Data"] as const;
@@ -12,22 +13,25 @@ type DataFilter = (typeof DATA_FILTERS)[number];
 
 type StoreRow = ReturnType<typeof buildRow>;
 
-function buildRow(loc: (typeof locations)[number]) {
+function buildRow(loc: (typeof locations)[number], caseSize: number) {
+  const effectiveLoc = getEffectiveLocation(loc);
   const entries = getMergedEntries(loc.id);
   const summary = summarize(entries);
   const signal = trendSignal(entries);
-  const casesPerWeek = weeklyCasesEstimate(summary.avgUnitsPerDay);
-  return { loc, entries, summary, signal, casesPerWeek };
+  const casesPerWeek = weeklyCasesEstimate(summary.avgUnitsPerDay, caseSize);
+  return { loc: effectiveLoc, entries, summary, signal, casesPerWeek };
 }
 
 export default function Home() {
-  const [rows, setRows] = useState<StoreRow[]>(() => locations.map(buildRow));
+  const [rows, setRows] = useState<StoreRow[]>(() =>
+    locations.map((loc) => buildRow(loc, loadPricing().caseSize))
+  );
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("All");
   const [dataFilter, setDataFilter] = useState<DataFilter>("All");
 
   useEffect(() => {
-    setRows(locations.map(buildRow));
+    setRows(locations.map((loc) => buildRow(loc, loadPricing().caseSize)));
   }, []);
 
   const states = useMemo(() => {

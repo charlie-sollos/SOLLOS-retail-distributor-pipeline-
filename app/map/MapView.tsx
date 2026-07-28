@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -14,7 +14,13 @@ const pinIcon = L.divIcon({
   popupAnchor: [0, -8],
 });
 
-function FitBounds({ locations }: { locations: StoreLocation[] }) {
+function FitBounds({
+  locations,
+  focusLoc,
+}: {
+  locations: StoreLocation[];
+  focusLoc?: StoreLocation;
+}) {
   const map = useMap();
   const boundsKey = locations
     .map((l) => l.id)
@@ -22,17 +28,35 @@ function FitBounds({ locations }: { locations: StoreLocation[] }) {
     .join(",");
 
   useEffect(() => {
+    if (focusLoc) {
+      map.setView([focusLoc.lat, focusLoc.lng], 15);
+      return;
+    }
     if (locations.length === 0) return;
     const bounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lng] as [number, number]));
     map.fitBounds(bounds, { padding: [30, 30] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, boundsKey]);
+  }, [map, boundsKey, focusLoc?.id]);
 
   return null;
 }
 
-export function MapView({ locations }: { locations: StoreLocation[] }) {
+export function MapView({
+  locations,
+  focusId,
+}: {
+  locations: StoreLocation[];
+  focusId?: string;
+}) {
   const initialBounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lng] as [number, number]));
+  const focusLoc = focusId ? locations.find((l) => l.id === focusId) : undefined;
+  const focusMarkerRef = useRef<L.Marker>(null);
+
+  useEffect(() => {
+    if (focusLoc && focusMarkerRef.current) {
+      focusMarkerRef.current.openPopup();
+    }
+  }, [focusLoc]);
 
   return (
     <MapContainer
@@ -41,13 +65,18 @@ export function MapView({ locations }: { locations: StoreLocation[] }) {
       scrollWheelZoom
       className="h-[70vh] w-full rounded-lg border border-zinc-200 dark:border-zinc-800"
     >
-      <FitBounds locations={locations} />
+      <FitBounds locations={locations} focusLoc={focusLoc} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {locations.map((loc) => (
-        <Marker key={loc.id} position={[loc.lat, loc.lng]} icon={pinIcon}>
+        <Marker
+          key={loc.id}
+          position={[loc.lat, loc.lng]}
+          icon={pinIcon}
+          ref={loc.id === focusId ? focusMarkerRef : undefined}
+        >
           <Popup>
             <div className="text-sm">
               <p className="font-semibold">{loc.name}</p>

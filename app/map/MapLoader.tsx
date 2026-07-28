@@ -12,6 +12,12 @@ const MapView = dynamic(() => import("./MapView").then((m) => m.MapView), {
   ),
 });
 
-export function MapLoader({ locations }: { locations: StoreLocation[] }) {
-  return <MapView locations={locations} />;
+export function MapLoader({
+  locations,
+  focusId,
+}: {
+  locations: StoreLocation[];
+  focusId?: string;
+}) {
+  return <MapView locations={locations} focusId={focusId} />;
 }

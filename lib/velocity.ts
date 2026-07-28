@@ -1,10 +1,4 @@
-export const PRICING = {
-  caseSize: 12,
-  caseCost: 27.6,
-  srp: 3.99,
-  costPerCan: 2.3,
-  gpPerCan: 1.69,
-};
+import { DEFAULT_PRICING, derivePricing, type DerivedPricing } from "@/lib/pricing";
 
 export type VelocityEntry = {
   weekStart: string;
@@ -16,7 +10,12 @@ export type VelocityEntry = {
   grossProfit: number;
 };
 
-export function computeEntry(weekStart: string, weekEnd: string, unitsSold: number): VelocityEntry {
+export function computeEntry(
+  weekStart: string,
+  weekEnd: string,
+  unitsSold: number,
+  pricing: DerivedPricing = derivePricing(DEFAULT_PRICING)
+): VelocityEntry {
   const start = new Date(weekStart + "T00:00:00");
   const end = new Date(weekEnd + "T00:00:00");
   const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1);
@@ -26,8 +25,8 @@ export function computeEntry(weekStart: string, weekEnd: string, unitsSold: numb
     days,
     unitsSold,
     unitsPerDay: Math.round((unitsSold / days) * 100) / 100,
-    revenue: Math.round(unitsSold * PRICING.srp * 100) / 100,
-    grossProfit: Math.round(unitsSold * PRICING.gpPerCan * 100) / 100,
+    revenue: Math.round(unitsSold * pricing.srp * 100) / 100,
+    grossProfit: Math.round(unitsSold * pricing.gpPerCan * 100) / 100,
   };
 }
 
@@ -70,8 +69,8 @@ export function trendSignal(entries: VelocityEntry[]): Signal {
   return { label: "Steady", tone: "steady" };
 }
 
-export function weeklyCasesEstimate(avgUnitsPerDay: number): number {
-  return Math.round(((avgUnitsPerDay * 7) / PRICING.caseSize) * 100) / 100;
+export function weeklyCasesEstimate(avgUnitsPerDay: number, caseSize: number = DEFAULT_PRICING.caseSize): number {
+  return Math.round(((avgUnitsPerDay * 7) / caseSize) * 100) / 100;
 }
 
 export type WeeklyAggregate = {

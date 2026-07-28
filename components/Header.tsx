@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const NAV_LINKS = [
   { href: "/", label: "Pipeline" },
   { href: "/map", label: "Store Map" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 export function Header() {

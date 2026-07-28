@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { loadLocalEntries, saveLocalEntries } from "@/lib/storeStorage";
 import {
   computeEntry,
@@ -11,6 +12,7 @@ import {
   toneStyle,
   type VelocityEntry,
 } from "@/lib/velocity";
+import { DEFAULT_PRICING, derivePricing, loadPricing, type Pricing } from "@/lib/pricing";
 import { VelocityChart } from "./VelocityChart";
 
 export function StoreVelocity({
@@ -21,6 +23,7 @@ export function StoreVelocity({
   seedEntries: VelocityEntry[];
 }) {
   const [localEntries, setLocalEntries] = useState<VelocityEntry[]>([]);
+  const [pricing, setPricing] = useState<Pricing>(DEFAULT_PRICING);
   const [weekStart, setWeekStart] = useState("");
   const [weekEnd, setWeekEnd] = useState("");
   const [unitsSold, setUnitsSold] = useState("");
@@ -28,12 +31,13 @@ export function StoreVelocity({
 
   useEffect(() => {
     setLocalEntries(loadLocalEntries(storeId));
+    setPricing(loadPricing());
   }, [storeId]);
 
   const entries = sortByWeek([...seedEntries, ...localEntries]);
   const summary = summarize(entries);
   const signal = trendSignal(entries);
-  const casesPerWeek = weeklyCasesEstimate(summary.avgUnitsPerDay);
+  const casesPerWeek = weeklyCasesEstimate(summary.avgUnitsPerDay, pricing.caseSize);
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +57,7 @@ export function StoreVelocity({
       return;
     }
 
-    const entry = computeEntry(weekStart, weekEnd, units);
+    const entry = computeEntry(weekStart, weekEnd, units, derivePricing(pricing));
     const next = [...localEntries, entry];
     setLocalEntries(next);
     saveLocalEntries(storeId, next);
@@ -172,7 +176,11 @@ export function StoreVelocity({
         </div>
         {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
         <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
-          Revenue and gross profit are calculated from the SOLLOS pricing sheet. Data added here
+          Revenue and gross profit use the current{" "}
+          <Link href="/pricing" className="underline hover:text-sollos-navy dark:hover:text-sollos-yellow">
+            pricing
+          </Link>
+          . Changing pricing later does not change entries already added here. Data added here
           is saved to this browser. Team-wide syncing will come with the SOLLOS team login.
         </p>
       </form>
