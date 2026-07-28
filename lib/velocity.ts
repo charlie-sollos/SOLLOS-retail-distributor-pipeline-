@@ -48,6 +48,13 @@ export type SignalTone = "growing" | "steady" | "declining" | "no-data";
 
 export type Signal = { label: string; tone: SignalTone };
 
+export const toneStyle: Record<SignalTone, string> = {
+  growing: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
+  steady: "bg-sollos-teal-light text-sollos-teal dark:bg-sollos-teal/20 dark:text-sollos-teal-light",
+  declining: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  "no-data": "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+};
+
 export function trendSignal(entries: VelocityEntry[]): Signal {
   if (entries.length === 0) return { label: "No data yet", tone: "no-data" };
   if (entries.length === 1) return { label: "Needs more weeks of data", tone: "no-data" };

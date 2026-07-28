@@ -42,7 +42,7 @@ export function MapView({ locations }: { locations: StoreLocation[] }) {
                   href={loc.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline"
+                  className="text-sollos-teal underline"
                 >
                   Website
                 </a>

@@ -16,3 +16,13 @@ export type StoreLocation = {
 };
 
 export const locations = raw as StoreLocation[];
+
+const STATE_ABBREVIATIONS: Record<string, string> = {
+  Florida: "FL",
+  "New Jersey": "NJ",
+  "New York": "NY",
+};
+
+export function normalizeState(state: string): string {
+  return STATE_ABBREVIATIONS[state] ?? state;
+}

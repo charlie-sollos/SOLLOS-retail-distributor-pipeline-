@@ -35,7 +35,7 @@ export function StoreNotes({ storeId }: { storeId: string }) {
         <div className="mt-3 flex items-center gap-3">
           <button
             onClick={handleSave}
-            className="rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+            className="rounded-md bg-sollos-teal px-3 py-1.5 text-sm font-medium text-white hover:bg-sollos-teal-dark"
           >
             Save Notes
           </button>

@@ -21,7 +21,7 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:px-10">
         <Link
           href="/"
-          className="mb-6 inline-block text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+          className="mb-6 inline-block text-sm text-zinc-500 hover:text-sollos-teal hover:underline dark:text-zinc-400 dark:hover:text-sollos-yellow"
         >
           ← Back to Pipeline
         </Link>
@@ -42,12 +42,12 @@ export default async function StorePage({ params }: { params: Promise<{ id: stri
                   href={store.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline dark:text-blue-400"
+                  className="text-sollos-teal underline dark:text-sollos-yellow"
                 >
                   Website
                 </a>
               )}
-              <Link href="/map" className="text-blue-600 underline dark:text-blue-400">
+              <Link href="/map" className="text-sollos-teal underline dark:text-sollos-yellow">
                 View on map
               </Link>
             </div>

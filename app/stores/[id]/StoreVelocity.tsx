@@ -8,16 +8,9 @@ import {
   summarize,
   trendSignal,
   weeklyCasesEstimate,
-  type SignalTone,
+  toneStyle,
   type VelocityEntry,
 } from "@/lib/velocity";
-
-const toneStyle: Record<SignalTone, string> = {
-  growing: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-  steady: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  declining: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  "no-data": "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-};
 
 export function StoreVelocity({
   storeId,
@@ -164,7 +157,7 @@ export function StoreVelocity({
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+              className="w-full rounded-md bg-sollos-teal px-3 py-1.5 text-sm font-medium text-white hover:bg-sollos-teal-dark"
             >
               Add
             </button>

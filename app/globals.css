@@ -10,6 +10,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-sollos-teal: #00616c;
+  --color-sollos-teal-dark: #00464e;
+  --color-sollos-teal-light: #e0f0f1;
+  --color-sollos-orange: #ff6b00;
+  --color-sollos-yellow: #ffd100;
 }
 
 @media (prefers-color-scheme: dark) {
