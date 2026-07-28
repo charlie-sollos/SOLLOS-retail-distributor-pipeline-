@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { locations, normalizeState } from "@/lib/locations";
-import { getEffectiveLocation } from "@/lib/storeStorage";
+import { locations, normalizeState, type StoreLocation } from "@/lib/locations";
+import { getEffectiveLocation, loadCustomStores } from "@/lib/storeStorage";
 import { MapLoader } from "./MapLoader";
+
+function hasCoords(loc: StoreLocation): loc is StoreLocation & { lat: number; lng: number } {
+  return loc.lat !== undefined && loc.lng !== undefined;
+}
 
 export function MapPageClient() {
   const searchParams = useSearchParams();
@@ -15,7 +19,8 @@ export function MapPageClient() {
   const [stateFilter, setStateFilter] = useState("All");
 
   useEffect(() => {
-    setEffectiveLocations(locations.map(getEffectiveLocation));
+    const all = [...locations, ...loadCustomStores()];
+    setEffectiveLocations(all.map(getEffectiveLocation));
   }, []);
 
   useEffect(() => {
@@ -39,6 +44,8 @@ export function MapPageClient() {
     });
   }, [effectiveLocations, search, stateFilter]);
 
+  const mappable = filtered.filter(hasCoords);
+  const unmappedCount = filtered.length - mappable.length;
   const approximateCount = filtered.filter((l) => l.approximate).length;
   const filtersActive = search !== "" || stateFilter !== "All";
 
@@ -53,6 +60,8 @@ export function MapPageClient() {
             {filtered.length} of {effectiveLocations.length} stockist locations
             {approximateCount > 0 &&
               ` (${approximateCount} approximate, city-level pins where a precise address match wasn't found)`}
+            {unmappedCount > 0 &&
+              ` (${unmappedCount} not yet placed on the map)`}
           </p>
         </header>
 
@@ -88,12 +97,12 @@ export function MapPageClient() {
           )}
         </div>
 
-        {filtered.length === 0 ? (
+        {mappable.length === 0 ? (
           <p className="rounded-lg border border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
             No stores match the current filters.
           </p>
         ) : (
-          <MapLoader locations={filtered} focusId={focusId} />
+          <MapLoader locations={mappable} focusId={focusId} />
         )}
       </main>
     </div>

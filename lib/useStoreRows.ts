@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { locations } from "@/lib/locations";
-import { getMergedEntries, getEffectiveLocation } from "@/lib/storeStorage";
+import { locations, type StoreLocation } from "@/lib/locations";
+import { getMergedEntries, getEffectiveLocation, loadCustomStores } from "@/lib/storeStorage";
 import { summarize, trendSignal, weeklyCasesEstimate } from "@/lib/velocity";
 import { loadPricing } from "@/lib/pricing";
 
-function buildRow(loc: (typeof locations)[number], caseSize: number) {
+function buildRow(loc: StoreLocation, caseSize: number) {
   const effectiveLoc = getEffectiveLocation(loc);
   const entries = getMergedEntries(loc.id);
   const summary = summarize(entries);
@@ -23,7 +23,8 @@ export function useStoreRows(): StoreRow[] {
   );
 
   useEffect(() => {
-    setRows(locations.map((loc) => buildRow(loc, loadPricing().caseSize)));
+    const all = [...locations, ...loadCustomStores()];
+    setRows(all.map((loc) => buildRow(loc, loadPricing().caseSize)));
   }, []);
 
   return rows;

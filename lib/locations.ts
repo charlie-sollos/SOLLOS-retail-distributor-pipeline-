@@ -10,8 +10,8 @@ export type StoreLocation = {
   country: string;
   phone: string;
   website: string;
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   approximate?: boolean;
 };
 

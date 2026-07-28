@@ -51,13 +51,21 @@ export function PipelinePageClient() {
   return (
     <div className="flex flex-1 flex-col bg-sollos-cream dark:bg-black">
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:px-10">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
-            Pipeline
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            All live stockist locations
-          </p>
+        <header className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
+              Pipeline
+            </h1>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              All live stockist locations
+            </p>
+          </div>
+          <Link
+            href="/stores/new"
+            className="shrink-0 rounded-md bg-sollos-navy px-3 py-1.5 text-sm font-medium text-white hover:bg-sollos-navy-dark"
+          >
+            + Add Store
+          </Link>
         </header>
 
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

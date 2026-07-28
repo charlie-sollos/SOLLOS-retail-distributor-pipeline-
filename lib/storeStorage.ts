@@ -5,6 +5,7 @@ import velocitySeed from "@/data/velocity-seed.json";
 const ENTRIES_PREFIX = "sollos:velocity:";
 const NOTES_PREFIX = "sollos:notes:";
 const STORE_OVERRIDE_PREFIX = "sollos:store-override:";
+const CUSTOM_STORES_KEY = "sollos:custom-stores";
 
 const seed = velocitySeed as Record<string, VelocityEntry[]>;
 
@@ -62,4 +63,29 @@ export function saveStoreOverride(storeId: string, override: StoreOverride) {
 
 export function getEffectiveLocation(loc: StoreLocation): StoreLocation {
   return { ...loc, ...loadStoreOverride(loc.id) };
+}
+
+export function loadCustomStores(): StoreLocation[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_STORES_KEY);
+    return raw ? (JSON.parse(raw) as StoreLocation[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCustomStores(stores: StoreLocation[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(CUSTOM_STORES_KEY, JSON.stringify(stores));
+}
+
+export function addCustomStore(store: StoreLocation) {
+  const stores = loadCustomStores();
+  stores.push(store);
+  saveCustomStores(stores);
+}
+
+export function getCustomStore(id: string): StoreLocation | undefined {
+  return loadCustomStores().find((s) => s.id === id);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { StoreLocation } from "@/lib/locations";
+import type { MappedLocation } from "./MapView";
 
 const MapView = dynamic(() => import("./MapView").then((m) => m.MapView), {
   ssr: false,
@@ -16,7 +16,7 @@ export function MapLoader({
   locations,
   focusId,
 }: {
-  locations: StoreLocation[];
+  locations: MappedLocation[];
   focusId?: string;
 }) {
   return <MapView locations={locations} focusId={focusId} />;

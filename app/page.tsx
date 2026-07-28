@@ -27,23 +27,21 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col bg-sollos-cream dark:bg-black">
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:px-10">
-        <div className="mb-10 rounded-2xl bg-gradient-to-b from-sollos-sky to-transparent px-6 py-8 dark:from-sollos-navy/30 dark:to-transparent sm:px-8">
-          <header className="mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
-              SOLLOS
-            </h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Retail and distributor overview
-            </p>
-          </header>
+        <header className="mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
+            SOLLOS
+          </h1>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Retail and distributor overview
+          </p>
+        </header>
 
-          <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Stat label="Live Stores" value={rows.length} />
-            <Stat label="With Velocity Data" value={withData.length} />
-            <Stat label="Total Units Sold" value={totalUnits} />
-            <Stat label="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} />
-          </section>
-        </div>
+        <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Stat label="Live Stores" value={rows.length} />
+          <Stat label="With Velocity Data" value={withData.length} />
+          <Stat label="Total Units Sold" value={totalUnits} />
+          <Stat label="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} />
+        </section>
 
         <section className="mb-10">
           <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">Alerts</h2>
@@ -165,11 +163,6 @@ export default function Home() {
             </div>
           )}
         </section>
-
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <QuickLink href="/pipeline" title="Pipeline" description="Search and filter every store" />
-          <QuickLink href="/map" title="Store Map" description="See every location on a map" />
-        </section>
       </main>
     </div>
   );
@@ -185,9 +178,9 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 }
 
 const alertToneStyle: Record<string, string> = {
-  "no-data": "border-zinc-300 dark:border-zinc-700",
-  declining: "border-amber-400 dark:border-amber-600",
-  growing: "border-green-400 dark:border-green-600",
+  "no-data": "border-t-zinc-400 dark:border-t-zinc-600",
+  declining: "border-t-amber-500",
+  growing: "border-t-green-500",
 };
 
 function AlertCard({
@@ -201,30 +194,10 @@ function AlertCard({
 }) {
   return (
     <div
-      className={`rounded-lg border-l-4 bg-white p-4 text-sm text-zinc-600 dark:bg-zinc-950 dark:text-zinc-400 ${alertToneStyle[tone]}`}
+      className={`rounded-lg border border-zinc-200 border-t-2 bg-white p-4 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 ${alertToneStyle[tone]}`}
     >
       <p className="mb-2 font-semibold text-black dark:text-zinc-50">{title}</p>
       {children}
     </div>
-  );
-}
-
-function QuickLink({
-  href,
-  title,
-  description,
-}: {
-  href: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="rounded-lg border border-zinc-200 bg-white p-4 hover:border-sollos-navy dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sollos-yellow"
-    >
-      <p className="font-semibold text-sollos-navy dark:text-zinc-50">{title}</p>
-      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
-    </Link>
   );
 }

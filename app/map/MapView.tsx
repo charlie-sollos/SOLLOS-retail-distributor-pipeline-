@@ -6,6 +6,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { StoreLocation } from "@/lib/locations";
 
+export type MappedLocation = StoreLocation & { lat: number; lng: number };
+
 const pinIcon = L.divIcon({
   className: "",
   html: `<div style="width:16px;height:16px;border-radius:50%;background:#002a53;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)"></div>`,
@@ -18,8 +20,8 @@ function FitBounds({
   locations,
   focusLoc,
 }: {
-  locations: StoreLocation[];
-  focusLoc?: StoreLocation;
+  locations: MappedLocation[];
+  focusLoc?: MappedLocation;
 }) {
   const map = useMap();
   const boundsKey = locations
@@ -45,7 +47,7 @@ export function MapView({
   locations,
   focusId,
 }: {
-  locations: StoreLocation[];
+  locations: MappedLocation[];
   focusId?: string;
 }) {
   const initialBounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lng] as [number, number]));

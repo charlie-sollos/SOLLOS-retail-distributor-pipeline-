@@ -115,9 +115,11 @@ export function StoreHeader({ store }: { store: StoreLocation }) {
               Website
             </a>
           )}
-          <Link href={`/map?store=${store.id}`} className="text-sollos-navy underline dark:text-sollos-yellow">
-            View on map
-          </Link>
+          {store.lat !== undefined && store.lng !== undefined && (
+            <Link href={`/map?store=${store.id}`} className="text-sollos-navy underline dark:text-sollos-yellow">
+              View on map
+            </Link>
+          )}
           <button
             onClick={() => setEditing(true)}
             className="text-sollos-navy underline dark:text-sollos-yellow"
