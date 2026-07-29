@@ -15,6 +15,7 @@ import {
   type VelocityEntry,
 } from "@/lib/velocity";
 import { mostRecentShipment, shipmentStalenessSignal } from "@/lib/shipments";
+import { estimateUnitsOnHand, restockSignal } from "@/lib/restock";
 import { loadPricing } from "@/lib/pricing";
 
 function buildRow(loc: StoreLocation, caseSize: number) {
@@ -35,6 +36,11 @@ function buildRow(loc: StoreLocation, caseSize: number) {
       : null,
     lastShipment: mostRecentShipment(shipments),
     shipmentSignal: shipmentStalenessSignal(shipments, entries),
+    /** Null unless both shipments and velocity are on record — see lib/restock.ts. */
+    restock:
+      shipments.length > 0 && entries.length > 0
+        ? restockSignal(estimateUnitsOnHand(shipments, entries, caseSize), summary.avgUnitsPerDay)
+        : null,
   };
 }
 

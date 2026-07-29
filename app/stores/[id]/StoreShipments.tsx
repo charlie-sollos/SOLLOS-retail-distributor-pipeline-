@@ -19,6 +19,9 @@ import {
   type ShipmentEntry,
   type ShipmentProblem,
 } from "@/lib/shipments";
+import { summarize, type VelocityEntry } from "@/lib/velocity";
+import { estimateUnitsOnHand, restockSignal, restockToneStyle } from "@/lib/restock";
+import { DEFAULT_PRICING, loadPricing, type Pricing } from "@/lib/pricing";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
 import {
   SectionHeading,
@@ -32,7 +35,8 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 
 export function StoreShipments({ storeId }: { storeId: string }) {
   const [shipments, setShipments] = useState<ShipmentEntry[]>([]);
-  const [velocityWeeks, setVelocityWeeks] = useState<{ weekStart: string; weekEnd: string }[]>([]);
+  const [velocityEntries, setVelocityEntries] = useState<VelocityEntry[]>([]);
+  const [pricing, setPricing] = useState<Pricing>(DEFAULT_PRICING);
   const [date, setDate] = useState("");
   const [cases, setCases] = useState("");
   const [problems, setProblems] = useState<ShipmentProblem[]>([]);
@@ -41,12 +45,23 @@ export function StoreShipments({ storeId }: { storeId: string }) {
 
   useEffect(() => {
     setShipments(getMergedShipments(storeId));
-    setVelocityWeeks(getMergedEntries(storeId));
+    setVelocityEntries(getMergedEntries(storeId));
+    setPricing(loadPricing());
   }, [storeId]);
 
   const sorted = useMemo(() => sortByDate(shipments), [shipments]);
   const last = mostRecentShipment(sorted);
-  const signal = shipmentStalenessSignal(sorted, velocityWeeks);
+  const signal = shipmentStalenessSignal(sorted, velocityEntries);
+
+  // Both logs have to be present for an on-hand estimate to mean anything —
+  // shipments alone or velocity alone can't say how much is left on the shelf.
+  const restock =
+    sorted.length > 0 && velocityEntries.length > 0
+      ? restockSignal(
+          estimateUnitsOnHand(sorted, velocityEntries, pricing.caseSize),
+          summarize(velocityEntries).avgUnitsPerDay
+        )
+      : null;
 
   function resetForm() {
     setDate("");
@@ -155,6 +170,15 @@ export function StoreShipments({ storeId }: { storeId: string }) {
             </Tbody>
           </Table>
         </div>
+      )}
+
+      {restock && (
+        <p className={`mb-5 rounded-xl px-4 py-3 text-sm font-medium ${restockToneStyle[restock.tone]}`}>
+          {restock.label}
+          <span className="ml-1 font-normal opacity-75">
+            (~{restock.onHandUnits} cans on hand, est.)
+          </span>
+        </p>
       )}
 
       <form onSubmit={handleSubmit} className="card p-5">
