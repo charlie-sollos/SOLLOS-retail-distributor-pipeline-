@@ -1,34 +1,81 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --default-font-family: var(--font-geist-sans);
 
-  --color-sollos-teal: #00616c;
-  --color-sollos-navy: #002a53;
-  --color-sollos-navy-dark: #00182f;
-  --color-sollos-cream: #fef6e8;
-  --color-sollos-sky: #d5eef6;
-  --color-sollos-orange: #ff6b00;
-  --color-sollos-yellow: #ffd100;
-}
+  /* Brand palette. Each color has one job, see the comments. */
+  --color-sollos-navy: #002a53; /* headings, primary buttons, primary data */
+  --color-sollos-navy-dark: #00182f; /* button hover */
+  --color-sollos-teal: #00616c; /* section eyebrows, metadata */
+  --color-sollos-cream: #fef6e8; /* page background */
+  --color-sollos-sky: #d5eef6; /* secondary surfaces, table headers */
+  --color-sollos-orange: #ff6b00; /* the single attention color */
+  --color-sollos-yellow: #ffd100; /* focus rings, the sun motif */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-sollos-good: #0f7a4a; /* growing */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-sollos-cream);
+  color: var(--color-sollos-navy);
+}
+
+/* Surface tiers. Tier 1 is a raised card, tier 2 an inset panel.
+   Never nest a bordered control directly inside a tier-1 card, use tier 2. */
+@utility card {
+  border-radius: var(--radius-2xl);
+  border: 1px solid color-mix(in srgb, var(--color-sollos-navy) 8%, transparent);
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(0, 42, 83, 0.04),
+    0 8px 24px -12px rgba(0, 42, 83, 0.12);
+}
+
+@utility panel {
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--color-sollos-sky) 40%, transparent);
+}
+
+/* Eyebrow label, used for section headings so they stop competing with the h1. */
+@utility eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--color-sollos-teal);
+}
+
+/* Numbers must never jitter between renders. */
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A tappable pill for field actions. Sized for a thumb, not a cursor. */
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-sollos-navy) 15%, transparent);
+  background: #fff;
+  padding: 0.4375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--color-sollos-navy) 78%, transparent);
+  transition:
+    border-color 150ms,
+    color 150ms;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--color-sollos-navy) 38%, transparent);
+    color: var(--color-sollos-navy);
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-sollos-yellow);
+  outline-offset: 2px;
 }

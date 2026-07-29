@@ -4,10 +4,32 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { normalizeState } from "@/lib/locations";
-import { useStoreRows } from "@/lib/useStoreRows";
+import { useStoreRows, type StoreRow } from "@/lib/useStoreRows";
+import { toneStyle } from "@/lib/velocity";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
+import { Page, PageTitle, PrimaryLink, GhostButton, inputClass } from "@/components/ui";
 
 const DATA_FILTERS = ["All", "Has Data", "Needs Data"] as const;
 type DataFilter = (typeof DATA_FILTERS)[number];
+
+const SORTS = {
+  name: { label: "Name", fn: (a: StoreRow, b: StoreRow) => a.loc.name.localeCompare(b.loc.name) },
+  rate: {
+    label: "Cans / day",
+    fn: (a: StoreRow, b: StoreRow) => b.summary.avgUnitsPerDay - a.summary.avgUnitsPerDay,
+  },
+  units: {
+    label: "Cans sold",
+    fn: (a: StoreRow, b: StoreRow) => b.summary.totalUnits - a.summary.totalUnits,
+  },
+  state: {
+    label: "State",
+    fn: (a: StoreRow, b: StoreRow) =>
+      normalizeState(a.loc.state).localeCompare(normalizeState(b.loc.state)) ||
+      a.loc.city.localeCompare(b.loc.city),
+  },
+} as const;
+type SortKey = keyof typeof SORTS;
 
 function isDataFilter(value: string | null): value is DataFilter {
   return (DATA_FILTERS as readonly string[]).includes(value ?? "");
@@ -17,12 +39,13 @@ export function PipelinePageClient() {
   const searchParams = useSearchParams();
   const initialDataFilter = searchParams.get("data");
 
-  const rows = useStoreRows();
+  const { rows } = useStoreRows();
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("All");
   const [dataFilter, setDataFilter] = useState<DataFilter>(
     isDataFilter(initialDataFilter) ? initialDataFilter : "All"
   );
+  const [sort, setSort] = useState<SortKey>("name");
 
   useEffect(() => {
     if (isDataFilter(initialDataFilter)) setDataFilter(initialDataFilter);
@@ -35,8 +58,12 @@ export function PipelinePageClient() {
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (q && !r.loc.name.toLowerCase().includes(q) && !r.loc.city.toLowerCase().includes(q)) {
+    const out = rows.filter((r) => {
+      if (
+        q &&
+        !r.loc.name.toLowerCase().includes(q) &&
+        !r.loc.city.toLowerCase().includes(q)
+      ) {
         return false;
       }
       if (stateFilter !== "All" && normalizeState(r.loc.state) !== stateFilter) return false;
@@ -44,138 +71,184 @@ export function PipelinePageClient() {
       if (dataFilter === "Needs Data" && r.entries.length > 0) return false;
       return true;
     });
-  }, [rows, search, stateFilter, dataFilter]);
+    return out.sort(SORTS[sort].fn);
+  }, [rows, search, stateFilter, dataFilter, sort]);
 
   const filtersActive = search !== "" || stateFilter !== "All" || dataFilter !== "All";
 
-  return (
-    <div className="flex flex-1 flex-col bg-sollos-cream dark:bg-black">
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:px-10">
-        <header className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
-              Pipeline
-            </h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              All live stockist locations
-            </p>
-          </div>
-          <Link
-            href="/stores/new"
-            className="shrink-0 rounded-md bg-sollos-navy px-3 py-1.5 text-sm font-medium text-white hover:bg-sollos-navy-dark"
-          >
-            + Add Store
-          </Link>
-        </header>
+  function clearFilters() {
+    setSearch("");
+    setStateFilter("All");
+    setDataFilter("All");
+  }
 
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+  return (
+    <Page>
+      <PageTitle
+        title="Pipeline"
+        subtitle={`${rows.length} live doors across ${states.length - 1} states`}
+        action={<PrimaryLink href="/stores/new">Add store</PrimaryLink>}
+      />
+
+      <div className="mb-4 space-y-2.5">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by store or city"
+          aria-label="Search stores"
+          className={inputClass}
+        />
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Select
+            label="State"
+            value={stateFilter}
+            onChange={setStateFilter}
+            options={states.map((s) => ({ value: s, label: s === "All" ? "All states" : s }))}
+          />
+          <Select
+            label="Data"
+            value={dataFilter}
+            onChange={(v) => setDataFilter(v as DataFilter)}
+            options={DATA_FILTERS.map((f) => ({ value: f, label: f }))}
+          />
+          <Select
+            label="Sort by"
+            value={sort}
+            onChange={(v) => setSort(v as SortKey)}
+            options={Object.entries(SORTS).map(([k, v]) => ({ value: k, label: v.label }))}
+          />
+          {filtersActive && <GhostButton onClick={clearFilters}>Clear</GhostButton>}
+          <span className="num ml-auto text-sm text-sollos-navy/45">
             {filteredRows.length} of {rows.length}
           </span>
         </div>
+      </div>
 
-        <div className="mb-4 flex flex-wrap gap-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by store or city"
-            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black placeholder:text-zinc-400 focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          />
-          <select
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          >
-            {states.map((s) => (
-              <option key={s} value={s}>
-                {s === "All" ? "All States" : s}
-              </option>
-            ))}
-          </select>
-          <select
-            value={dataFilter}
-            onChange={(e) => setDataFilter(e.target.value as DataFilter)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          >
-            {DATA_FILTERS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-          {filtersActive && (
-            <button
-              onClick={() => {
-                setSearch("");
-                setStateFilter("All");
-                setDataFilter("All");
-              }}
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:border-sollos-navy hover:text-sollos-navy dark:border-zinc-700 dark:text-zinc-400"
-            >
-              Clear
-            </button>
-          )}
+      {filteredRows.length === 0 ? (
+        <div className="card px-6 py-10 text-center text-sm text-sollos-navy/55">
+          No doors match these filters.
         </div>
+      ) : (
+        <>
+          {/* Phones get cards. A six column table behind a horizontal scrollbar is
+              unusable when you are standing in a store aisle. */}
+          <ul className="space-y-2.5 sm:hidden">
+            {filteredRows.map((row) => (
+              <li key={row.loc.id}>
+                <Link href={`/stores/${row.loc.id}`} className="card block p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-sollos-navy">{row.loc.name}</p>
+                      <p className="mt-0.5 text-xs text-sollos-navy/50">
+                        {row.loc.city}, {normalizeState(row.loc.state)}
+                      </p>
+                    </div>
+                    {row.entries.length > 0 ? (
+                      <p className="shrink-0 text-right">
+                        <span className="num block text-lg font-semibold leading-none text-sollos-navy">
+                          {row.summary.avgUnitsPerDay}
+                        </span>
+                        <span className="text-[10px] text-sollos-navy/45">cans/day</span>
+                      </p>
+                    ) : (
+                      <span className="shrink-0 rounded-full border border-dashed border-sollos-orange/50 px-2.5 py-1 text-xs font-medium text-sollos-orange">
+                        Add data
+                      </span>
+                    )}
+                  </div>
+                  {row.entries.length > 0 && (
+                    <span
+                      className={`mt-2.5 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[row.signal.tone]}`}
+                    >
+                      {row.signal.label}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-100 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">Store</th>
-                <th className="px-4 py-3 font-medium">City</th>
-                <th className="px-4 py-3 font-medium">State</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Data</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {filteredRows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-zinc-500 dark:text-zinc-400">
-                    No stores match the current filters.
-                  </td>
-                </tr>
-              ) : (
-                filteredRows.map((row) => (
-                  <tr
-                    key={row.loc.id}
-                    className="bg-white hover:bg-sollos-sky dark:bg-black dark:hover:bg-zinc-950"
-                  >
-                    <td className="px-4 py-3 font-medium text-black dark:text-zinc-50">
-                      <Link href={`/stores/${row.loc.id}`} className="hover:text-sollos-navy hover:underline dark:hover:text-sollos-yellow">
+          <div className="hidden sm:block">
+            <Table caption="All live stockist doors">
+              <Thead>
+                <Th>Store</Th>
+                <Th>City</Th>
+                <Th>State</Th>
+                <Th align="right">Cans / day</Th>
+                <Th align="right">Cases / wk</Th>
+                <Th>Signal</Th>
+              </Thead>
+              <Tbody>
+                {filteredRows.map((row) => (
+                  <Tr key={row.loc.id}>
+                    <Td strong>
+                      <Link
+                        href={`/stores/${row.loc.id}`}
+                        className="underline decoration-transparent underline-offset-4 transition-colors hover:decoration-sollos-navy/30"
+                      >
                         {row.loc.name}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{row.loc.city}</td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                      {normalizeState(row.loc.state)}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                      {row.loc.phone || "-"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-300">
-                        Live
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {row.entries.length > 0 ? (
-                        <span className="text-zinc-600 dark:text-zinc-400">
-                          {row.entries.length} {row.entries.length === 1 ? "entry" : "entries"}
-                        </span>
+                    </Td>
+                    <Td>{row.loc.city}</Td>
+                    <Td muted>{normalizeState(row.loc.state)}</Td>
+                    <Td numeric strong>
+                      {row.entries.length ? row.summary.avgUnitsPerDay : "-"}
+                    </Td>
+                    <Td numeric>{row.entries.length ? row.casesPerWeek : "-"}</Td>
+                    <Td>
+                      {row.entries.length === 0 ? (
+                        <Link
+                          href={`/stores/${row.loc.id}`}
+                          className="inline-block rounded-full border border-dashed border-sollos-navy/25 px-2.5 py-1 text-xs font-medium text-sollos-navy/60 transition-colors hover:border-sollos-orange hover:bg-sollos-orange/8 hover:text-sollos-orange"
+                        >
+                          Add data
+                        </Link>
                       ) : (
-                        <span className="text-zinc-400 dark:text-zinc-600">No data</span>
+                        <span
+                          className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[row.signal.tone]}`}
+                        >
+                          {row.signal.label}
+                        </span>
                       )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </main>
-    </div>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </div>
+        </>
+      )}
+    </Page>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <label className="inline-flex items-center gap-1.5 text-xs font-medium text-sollos-navy/55">
+      <span className="sr-only sm:not-sr-only">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        className="rounded-xl border border-sollos-navy/15 bg-white px-2.5 py-1.5 text-sm font-normal text-sollos-navy focus:border-sollos-navy/40 focus:outline-none"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

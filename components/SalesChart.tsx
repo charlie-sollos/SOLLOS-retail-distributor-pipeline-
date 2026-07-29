@@ -1,7 +1,7 @@
 import { TrendChart, type TrendPoint } from "@/components/TrendChart";
 import type { WeeklyAggregate } from "@/lib/velocity";
 
-function formatShortDate(iso: string): string {
+function shortDate(iso: string): string {
   const [, month, day] = iso.split("-");
   return `${month}/${day}`;
 }
@@ -11,10 +11,12 @@ export function SalesChart({ weeklySales }: { weeklySales: WeeklyAggregate[] }) 
 
   const points: TrendPoint[] = weeklySales.map((w) => ({
     key: w.weekStart,
-    x: formatShortDate(w.weekStart),
-    y: w.revenue,
-    tooltipLabel: `Week of ${formatShortDate(w.weekStart)} to ${formatShortDate(w.weekEnd)}`,
-    tooltipValue: `$${w.revenue.toFixed(2)} in sales, ${w.unitsSold} units`,
+    x: shortDate(w.weekStart),
+    y: w.unitsSold,
+    tooltipLabel: `Week of ${shortDate(w.weekStart)} (${w.storeCount} ${
+      w.storeCount === 1 ? "door" : "doors"
+    })`,
+    tooltipValue: `${w.unitsSold} cans, $${w.sollosRevenue.toFixed(2)} to SOLLOS`,
   }));
 
   const last = weeklySales[weeklySales.length - 1];
@@ -22,9 +24,9 @@ export function SalesChart({ weeklySales }: { weeklySales: WeeklyAggregate[] }) 
   return (
     <TrendChart
       points={points}
-      title="Weekly Sales, All Stores"
-      yTickFormat={(v) => `$${Math.round(v)}`}
-      endLabel={`$${last.revenue.toFixed(0)}`}
+      title="Cans sold per week, all doors"
+      yTickFormat={(v) => String(Math.round(v))}
+      endLabel={`${last.unitsSold} cans`}
     />
   );
 }

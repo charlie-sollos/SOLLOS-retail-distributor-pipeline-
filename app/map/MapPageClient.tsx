@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { locations, normalizeState, type StoreLocation } from "@/lib/locations";
 import { getEffectiveLocation, loadCustomStores } from "@/lib/storeStorage";
 import { MapLoader } from "./MapLoader";
+import { Page, PageTitle, GhostButton, inputClass } from "@/components/ui";
 
 function hasCoords(loc: StoreLocation): loc is StoreLocation & { lat: number; lng: number } {
   return loc.lat !== undefined && loc.lng !== undefined;
@@ -14,13 +16,12 @@ export function MapPageClient() {
   const searchParams = useSearchParams();
   const focusId = searchParams.get("store") ?? undefined;
 
-  const [effectiveLocations, setEffectiveLocations] = useState(locations);
+  const [allStores, setAllStores] = useState<StoreLocation[]>(locations);
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("All");
 
   useEffect(() => {
-    const all = [...locations, ...loadCustomStores()];
-    setEffectiveLocations(all.map(getEffectiveLocation));
+    setAllStores([...locations, ...loadCustomStores()].map(getEffectiveLocation));
   }, []);
 
   useEffect(() => {
@@ -31,80 +32,115 @@ export function MapPageClient() {
   }, [focusId]);
 
   const states = useMemo(() => {
-    const unique = new Set(effectiveLocations.map((l) => normalizeState(l.state)));
+    const unique = new Set(allStores.map((l) => normalizeState(l.state)));
     return ["All", ...Array.from(unique).sort()];
-  }, [effectiveLocations]);
+  }, [allStores]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return effectiveLocations.filter((l) => {
+    return allStores.filter((l) => {
       if (q && !l.name.toLowerCase().includes(q) && !l.city.toLowerCase().includes(q)) return false;
       if (stateFilter !== "All" && normalizeState(l.state) !== stateFilter) return false;
       return true;
     });
-  }, [effectiveLocations, search, stateFilter]);
+  }, [allStores, search, stateFilter]);
 
   const mappable = filtered.filter(hasCoords);
-  const unmappedCount = filtered.length - mappable.length;
-  const approximateCount = filtered.filter((l) => l.approximate).length;
+  const unmapped = filtered.length - mappable.length;
   const filtersActive = search !== "" || stateFilter !== "All";
 
+  // Doors per state, so the map header says something about the footprint.
+  const byState = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const l of filtered) {
+      const s = normalizeState(l.state);
+      counts.set(s, (counts.get(s) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [filtered]);
+
   return (
-    <div className="flex flex-1 flex-col bg-sollos-cream dark:bg-black">
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 sm:px-10">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-sollos-navy dark:text-zinc-50">
-            Store Locations
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {filtered.length} of {effectiveLocations.length} stockist locations
-            {approximateCount > 0 &&
-              ` (${approximateCount} approximate, city-level pins where a precise address match wasn't found)`}
-            {unmappedCount > 0 &&
-              ` (${unmappedCount} not yet placed on the map)`}
-          </p>
-        </header>
+    <Page>
+      <PageTitle
+        title="Map"
+        subtitle={`${filtered.length} of ${allStores.length} doors${
+          unmapped > 0 ? `, ${unmapped} not yet placed` : ""
+        }`}
+      />
 
-        <div className="mb-4 flex flex-wrap gap-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by store or city"
-            className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black placeholder:text-zinc-400 focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
-          />
-          <select
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-black focus:border-sollos-navy focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+      <div className="mb-4 flex flex-wrap items-center gap-2.5">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by store or city"
+          aria-label="Search stores"
+          className={`${inputClass} sm:max-w-xs`}
+        />
+        <select
+          value={stateFilter}
+          onChange={(e) => setStateFilter(e.target.value)}
+          aria-label="Filter by state"
+          className="rounded-xl border border-sollos-navy/15 bg-white px-2.5 py-2 text-sm text-sollos-navy focus:border-sollos-navy/40 focus:outline-none"
+        >
+          {states.map((s) => (
+            <option key={s} value={s}>
+              {s === "All" ? "All states" : s}
+            </option>
+          ))}
+        </select>
+        {filtersActive && (
+          <GhostButton
+            onClick={() => {
+              setSearch("");
+              setStateFilter("All");
+            }}
           >
-            {states.map((s) => (
-              <option key={s} value={s}>
-                {s === "All" ? "All States" : s}
-              </option>
-            ))}
-          </select>
-          {filtersActive && (
-            <button
-              onClick={() => {
-                setSearch("");
-                setStateFilter("All");
-              }}
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-600 hover:border-sollos-navy hover:text-sollos-navy dark:border-zinc-700 dark:text-zinc-400"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
-        {mappable.length === 0 ? (
-          <p className="rounded-lg border border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-            No stores match the current filters.
-          </p>
-        ) : (
-          <MapLoader locations={mappable} focusId={focusId} />
+            Clear
+          </GhostButton>
         )}
-      </main>
-    </div>
+        <div className="ml-auto flex gap-1.5">
+          {byState.map(([s, n]) => (
+            <span
+              key={s}
+              className="num rounded-full bg-sollos-sky/60 px-2.5 py-1 text-xs font-medium text-sollos-navy"
+            >
+              {s} {n}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {mappable.length === 0 ? (
+        <div className="card px-6 py-10 text-center text-sm text-sollos-navy/55">
+          No doors match these filters.
+        </div>
+      ) : (
+        <MapLoader locations={mappable} focusId={focusId} />
+      )}
+
+      {/* The map alone is unreadable to a screen reader and unusable by keyboard,
+          so the same set is always available as a plain list. */}
+      {filtered.length > 0 && (
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-medium text-sollos-navy/60 transition-colors hover:text-sollos-navy">
+            List all {filtered.length} doors
+          </summary>
+          <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((l) => (
+              <li key={l.id}>
+                <Link href={`/stores/${l.id}`} className="card block px-3.5 py-2.5">
+                  <p className="truncate text-sm font-medium text-sollos-navy">{l.name}</p>
+                  <p className="truncate text-xs text-sollos-navy/50">
+                    {[l.address1, l.city, normalizeState(l.state)].filter(Boolean).join(", ")}
+                    {!hasCoords(l) && " (not on map)"}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </Page>
   );
 }

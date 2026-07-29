@@ -1,7 +1,7 @@
 import { TrendChart, type TrendPoint } from "@/components/TrendChart";
-import type { VelocityEntry } from "@/lib/velocity";
+import { trendSignal, type VelocityEntry } from "@/lib/velocity";
 
-function formatShortDate(iso: string): string {
+function shortDate(iso: string): string {
   const [, month, day] = iso.split("-");
   return `${month}/${day}`;
 }
@@ -10,12 +10,15 @@ export function VelocityChart({ entries }: { entries: VelocityEntry[] }) {
   if (entries.length < 2) return null;
 
   const points: TrendPoint[] = entries.map((e) => ({
-    key: e.weekStart,
-    x: formatShortDate(e.weekStart),
+    key: e.id ?? e.weekStart,
+    x: shortDate(e.weekStart),
     y: e.unitsPerDay,
-    tooltipLabel: `Week of ${formatShortDate(e.weekStart)} to ${formatShortDate(e.weekEnd)}`,
-    tooltipValue: `${e.unitsPerDay} units/day, $${e.revenue.toFixed(2)} revenue`,
+    tooltipLabel: `${shortDate(e.weekStart)} to ${shortDate(e.weekEnd)} (${e.days}d)`,
+    tooltipValue: `${e.unitsPerDay} cans/day, ${e.unitsSold} total`,
   }));
 
-  return <TrendChart points={points} title="Units / Day Trend" />;
+  // The line carries the verdict: orange when the store needs a look.
+  const tone = trendSignal(entries).tone === "declining" ? "orange" : "navy";
+
+  return <TrendChart points={points} title="Cans per day" tone={tone} />;
 }

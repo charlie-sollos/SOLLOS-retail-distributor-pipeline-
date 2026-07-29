@@ -6,7 +6,7 @@ import type { MappedLocation } from "./MapView";
 const MapView = dynamic(() => import("./MapView").then((m) => m.MapView), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[70vh] w-full items-center justify-center rounded-lg border border-zinc-200 text-sm text-zinc-500 dark:border-zinc-800">
+    <div className="flex h-[70vh] w-full items-center justify-center rounded-2xl border border-sollos-navy/10 bg-white text-sm text-sollos-navy/50">
       Loading map...
     </div>
   ),

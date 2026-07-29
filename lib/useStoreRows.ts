@@ -1,31 +1,71 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { locations, type StoreLocation } from "@/lib/locations";
-import { getMergedEntries, getEffectiveLocation, loadCustomStores } from "@/lib/storeStorage";
-import { summarize, trendSignal, weeklyCasesEstimate } from "@/lib/velocity";
+import {
+  getMergedEntries,
+  getEffectiveLocation,
+  loadCustomStores,
+} from "@/lib/storeStorage";
+import {
+  summarize,
+  trendSignal,
+  weeklyCasesEstimate,
+  type VelocityEntry,
+} from "@/lib/velocity";
 import { loadPricing } from "@/lib/pricing";
 
 function buildRow(loc: StoreLocation, caseSize: number) {
-  const effectiveLoc = getEffectiveLocation(loc);
-  const entries = getMergedEntries(loc.id);
+  const entries: VelocityEntry[] = getMergedEntries(loc.id);
   const summary = summarize(entries);
   const signal = trendSignal(entries);
   const casesPerWeek = weeklyCasesEstimate(summary.avgUnitsPerDay, caseSize);
-  return { loc: effectiveLoc, entries, summary, signal, casesPerWeek };
+  return {
+    loc: getEffectiveLocation(loc),
+    entries,
+    summary,
+    signal,
+    casesPerWeek,
+    /** Last period end on record, or null. Drives staleness. */
+    lastReported: entries.length
+      ? entries.reduce((a, e) => (e.weekEnd > a ? e.weekEnd : a), entries[0].weekEnd)
+      : null,
+  };
 }
 
 export type StoreRow = ReturnType<typeof buildRow>;
 
-export function useStoreRows(): StoreRow[] {
+/** How many days since a store last reported, or null if it never has. */
+export function daysStale(row: StoreRow, today: Date = new Date()): number | null {
+  if (!row.lastReported) return null;
+  const last = new Date(row.lastReported + "T00:00:00Z").getTime();
+  const now = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  return Math.max(0, Math.round((now - last) / 86_400_000));
+}
+
+/**
+ * Reads pricing once rather than per store, which previously meant one
+ * localStorage hit per row on every render pass.
+ */
+function buildAll(): StoreRow[] {
+  const caseSize = loadPricing().caseSize;
+  return [...locations, ...loadCustomStores()].map((loc) => buildRow(loc, caseSize));
+}
+
+export function useStoreRows(): { rows: StoreRow[]; refresh: () => void; ready: boolean } {
+  // Start from the static roster so the server and first client render agree,
+  // then fold in anything held locally once mounted.
   const [rows, setRows] = useState<StoreRow[]>(() =>
-    locations.map((loc) => buildRow(loc, loadPricing().caseSize))
+    locations.map((loc) => buildRow(loc, 12))
   );
+  const [ready, setReady] = useState(false);
+
+  const refresh = useCallback(() => setRows(buildAll()), []);
 
   useEffect(() => {
-    const all = [...locations, ...loadCustomStores()];
-    setRows(all.map((loc) => buildRow(loc, loadPricing().caseSize)));
-  }, []);
+    refresh();
+    setReady(true);
+  }, [refresh]);
 
-  return rows;
+  return { rows, refresh, ready };
 }

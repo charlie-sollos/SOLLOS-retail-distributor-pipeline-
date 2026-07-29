@@ -1,13 +1,18 @@
+import { SunMark } from "@/components/ui";
+
 export function Footer() {
   return (
-    <footer className="border-t border-zinc-200 bg-sollos-cream dark:border-zinc-800 dark:bg-black">
-      <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-zinc-500 dark:text-zinc-400 sm:flex-row sm:px-10">
-        <p>SOLLOS © 2026. All rights reserved.</p>
+    <footer className="mt-auto border-t border-sollos-navy/10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-sollos-navy/50 sm:flex-row sm:px-8">
+        <p className="flex items-center gap-2">
+          <SunMark className="h-3.5 w-3.5" />
+          SOLLOS © 2026. All rights reserved.
+        </p>
         <a
           href="https://sollos.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sollos-navy underline dark:text-sollos-yellow"
+          className="font-medium text-sollos-navy/70 underline decoration-sollos-navy/25 underline-offset-4 transition-colors hover:text-sollos-navy"
         >
           sollos.com
         </a>

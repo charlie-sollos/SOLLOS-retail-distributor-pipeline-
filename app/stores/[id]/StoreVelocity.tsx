@@ -1,198 +1,306 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { loadLocalEntries, saveLocalEntries } from "@/lib/storeStorage";
+import {
+  addEntry,
+  deleteEntry,
+  getMergedEntries,
+  updateEntry,
+} from "@/lib/storeStorage";
 import {
   computeEntry,
+  daysOfCover,
   sortByWeek,
   summarize,
-  trendSignal,
-  weeklyCasesEstimate,
   toneStyle,
+  trendSignal,
+  validateEntry,
+  weeklyCasesEstimate,
+  type EntryProblem,
   type VelocityEntry,
 } from "@/lib/velocity";
 import { DEFAULT_PRICING, derivePricing, loadPricing, type Pricing } from "@/lib/pricing";
 import { VelocityChart } from "./VelocityChart";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
+import {
+  SectionHeading,
+  Stat,
+  PrimaryButton,
+  GhostButton,
+  EmptyState,
+  inputClass,
+} from "@/components/ui";
 
-export function StoreVelocity({
-  storeId,
-  seedEntries,
-}: {
-  storeId: string;
-  seedEntries: VelocityEntry[];
-}) {
-  const [localEntries, setLocalEntries] = useState<VelocityEntry[]>([]);
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+export function StoreVelocity({ storeId }: { storeId: string }) {
+  const [entries, setEntries] = useState<VelocityEntry[]>([]);
   const [pricing, setPricing] = useState<Pricing>(DEFAULT_PRICING);
   const [weekStart, setWeekStart] = useState("");
   const [weekEnd, setWeekEnd] = useState("");
   const [unitsSold, setUnitsSold] = useState("");
-  const [error, setError] = useState("");
+  const [problems, setProblems] = useState<EntryProblem[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
-    setLocalEntries(loadLocalEntries(storeId));
+    setEntries(getMergedEntries(storeId));
     setPricing(loadPricing());
   }, [storeId]);
 
-  const entries = sortByWeek([...seedEntries, ...localEntries]);
-  const summary = summarize(entries);
-  const signal = trendSignal(entries);
+  const sorted = useMemo(() => sortByWeek(entries), [entries]);
+  const summary = summarize(sorted);
+  const signal = trendSignal(sorted);
   const casesPerWeek = weeklyCasesEstimate(summary.avgUnitsPerDay, pricing.caseSize);
 
-  function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+  // A restock guess is only meaningful once there is a rate to project from.
+  const coverDays =
+    summary.avgUnitsPerDay > 0
+      ? daysOfCover(Math.round(casesPerWeek * pricing.caseSize), summary.avgUnitsPerDay)
+      : null;
 
-    if (!weekStart || !weekEnd || !unitsSold) {
-      setError("Fill in week start, week end, and units sold.");
-      return;
-    }
-    if (weekEnd < weekStart) {
-      setError("Week end must be on or after week start.");
-      return;
-    }
-    const units = Number(unitsSold);
-    if (!Number.isFinite(units) || units < 0) {
-      setError("Units sold must be a positive number.");
-      return;
-    }
-
-    const entry = computeEntry(weekStart, weekEnd, units, derivePricing(pricing));
-    const next = [...localEntries, entry];
-    setLocalEntries(next);
-    saveLocalEntries(storeId, next);
+  function resetForm() {
     setWeekStart("");
     setWeekEnd("");
     setUnitsSold("");
+    setEditingId(null);
+    setProblems([]);
   }
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    // When editing, the row being replaced must not block itself as an overlap.
+    const others = editingId ? sorted.filter((x) => x.id !== editingId) : sorted;
+    const found = validateEntry(weekStart, weekEnd, unitsSold, others, todayIso());
+    setProblems(found);
+    if (found.length) return;
+
+    const entry = computeEntry(
+      weekStart,
+      weekEnd,
+      Number(unitsSold),
+      derivePricing(pricing),
+      editingId ?? undefined
+    );
+    const ok = editingId ? updateEntry(storeId, entry) : addEntry(storeId, entry);
+    if (!ok) {
+      setProblems([
+        { field: "unitsSold", message: "Could not save. Browser storage may be full." },
+      ]);
+      return;
+    }
+    setEntries(getMergedEntries(storeId));
+    setStatus(editingId ? "Period updated." : "Period added.");
+    resetForm();
+  }
+
+  function handleEdit(entry: VelocityEntry) {
+    setEditingId(entry.id ?? null);
+    setWeekStart(entry.weekStart);
+    setWeekEnd(entry.weekEnd);
+    setUnitsSold(String(entry.unitsSold));
+    setProblems([]);
+    setStatus("");
+  }
+
+  function handleDelete(entry: VelocityEntry) {
+    if (!entry.id) return;
+    const label = `${entry.weekStart} to ${entry.weekEnd}`;
+    if (!window.confirm(`Delete the period ${label}? This cannot be undone.`)) return;
+    deleteEntry(storeId, entry.id);
+    setEntries(getMergedEntries(storeId));
+    setStatus("Period deleted.");
+    if (editingId === entry.id) resetForm();
+  }
+
+  const problemFor = (field: EntryProblem["field"]) =>
+    problems.find((p) => p.field === field)?.message;
+
   return (
-    <section className="mb-8">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-black dark:text-zinc-50">Product Velocity</h2>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[signal.tone]}`}>
-          {signal.label}
-        </span>
-      </div>
-
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Total Units" value={summary.totalUnits} />
-        <Stat label="Avg Units / Day" value={summary.avgUnitsPerDay} />
-        <Stat label="Est. Cases / Week" value={casesPerWeek} />
-        <Stat label="Total Gross Profit" value={`$${summary.totalGrossProfit.toFixed(2)}`} />
-      </div>
-
-      {entries.length >= 2 && (
-        <div className="mb-6">
-          <VelocityChart entries={entries} />
-        </div>
-      )}
-
-      {entries.length > 0 && (
-        <div className="mb-6 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-100 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">Week Start</th>
-                <th className="px-4 py-3 font-medium">Week End</th>
-                <th className="px-4 py-3 font-medium text-right">Days</th>
-                <th className="px-4 py-3 font-medium text-right">Units Sold</th>
-                <th className="px-4 py-3 font-medium text-right">Units / Day</th>
-                <th className="px-4 py-3 font-medium text-right">Revenue</th>
-                <th className="px-4 py-3 font-medium text-right">Gross Profit</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {entries.map((e, i) => (
-                <tr key={`${e.weekStart}-${i}`} className="bg-white dark:bg-black">
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{e.weekStart}</td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{e.weekEnd}</td>
-                  <td className="px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
-                    {e.days}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
-                    {e.unitsSold}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
-                    {e.unitsPerDay}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
-                    ${e.revenue.toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
-                    ${e.grossProfit.toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <form
-        onSubmit={handleAdd}
-        className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+    <section className="mb-10">
+      <SectionHeading
+        action={
+          <span
+            className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[signal.tone]}`}
+          >
+            {signal.label}
+          </span>
+        }
       >
-        <h3 className="mb-3 text-sm font-semibold text-black dark:text-zinc-50">
-          Add a week of data
+        Velocity
+      </SectionHeading>
+
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <Stat label="Cans / day" value={summary.avgUnitsPerDay} hint="Current rate" />
+        <Stat label="Cases / wk" value={casesPerWeek} hint="At that rate" />
+        <Stat label="Cans sold" value={summary.totalUnits} hint={`Over ${summary.totalDays} days`} />
+        <Stat
+          label="SOLLOS revenue"
+          value={`$${summary.totalSollosRevenue.toFixed(2)}`}
+          hint={`Retail $${summary.totalRevenue.toFixed(2)}`}
+        />
+      </div>
+
+      {sorted.length === 0 ? (
+        <EmptyState title="No periods recorded yet">
+          Add the first week of units below. Two periods is enough for the app to start
+          calling the trend and estimating restocks.
+        </EmptyState>
+      ) : (
+        <>
+          {sorted.length >= 2 && (
+            <div className="mb-5">
+              <VelocityChart entries={sorted} />
+            </div>
+          )}
+
+          {coverDays !== null && (
+            <p className="mb-5 text-sm text-sollos-navy/60">
+              At <span className="num font-medium text-sollos-navy">{summary.avgUnitsPerDay}</span>{" "}
+              cans a day, one case of {pricing.caseSize} lasts about{" "}
+              <span className="num font-medium text-sollos-navy">
+                {daysOfCover(pricing.caseSize, summary.avgUnitsPerDay)}
+              </span>{" "}
+              days on this shelf.
+            </p>
+          )}
+
+          <div className="mb-5">
+            <Table caption="Recorded reporting periods">
+              <Thead>
+                <Th>Period</Th>
+                <Th align="right">Days</Th>
+                <Th align="right">Cans</Th>
+                <Th align="right">Cans / day</Th>
+                <Th align="right">SOLLOS rev</Th>
+                <Th align="right">Retail</Th>
+                <Th align="right">
+                  <span className="sr-only">Actions</span>
+                </Th>
+              </Thead>
+              <Tbody>
+                {sorted.map((e) => (
+                  <Tr key={e.id ?? e.weekStart}>
+                    <Td strong>
+                      {e.weekStart} <span className="text-sollos-navy/35">to</span> {e.weekEnd}
+                      {e.pricing && e.pricing.srp !== pricing.srp && (
+                        <span className="ml-1.5 text-xs text-sollos-navy/40">
+                          @ ${e.pricing.srp.toFixed(2)}
+                        </span>
+                      )}
+                    </Td>
+                    <Td numeric muted>
+                      {e.days}
+                    </Td>
+                    <Td numeric strong>
+                      {e.unitsSold}
+                    </Td>
+                    <Td numeric>{e.unitsPerDay}</Td>
+                    <Td numeric>
+                      ${(e.sollosRevenue ?? 0).toFixed(2)}
+                    </Td>
+                    <Td numeric muted>
+                      ${e.revenue.toFixed(2)}
+                    </Td>
+                    <Td className="whitespace-nowrap text-right">
+                      <button
+                        onClick={() => handleEdit(e)}
+                        className="text-xs font-medium text-sollos-navy/60 underline underline-offset-4 transition-colors hover:text-sollos-navy"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(e)}
+                        className="ml-3 text-xs font-medium text-sollos-navy/40 underline underline-offset-4 transition-colors hover:text-sollos-orange"
+                      >
+                        Delete
+                      </button>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </div>
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className="card p-5">
+        <h3 className="mb-3.5 text-sm font-semibold text-sollos-navy">
+          {editingId ? "Edit period" : "Add a period"}
         </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
-            Week Start
+          <FormField label="From" error={problemFor("weekStart")}>
             <input
               type="date"
+              max={todayIso()}
               value={weekStart}
               onChange={(e) => setWeekStart(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-black dark:border-zinc-700 dark:bg-black dark:text-zinc-50"
+              className={inputClass}
             />
-          </label>
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
-            Week End
+          </FormField>
+          <FormField label="To" error={problemFor("weekEnd")}>
             <input
               type="date"
+              max={todayIso()}
               value={weekEnd}
               onChange={(e) => setWeekEnd(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-black dark:border-zinc-700 dark:bg-black dark:text-zinc-50"
+              className={inputClass}
             />
-          </label>
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
-            Units Sold
+          </FormField>
+          <FormField label="Cans sold" error={problemFor("unitsSold")}>
             <input
               type="number"
               min="0"
+              step="1"
+              inputMode="numeric"
               value={unitsSold}
               onChange={(e) => setUnitsSold(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-black dark:border-zinc-700 dark:bg-black dark:text-zinc-50"
+              className={inputClass}
             />
-          </label>
-          <div className="flex items-end">
-            <button
-              type="submit"
-              className="w-full rounded-md bg-sollos-navy px-3 py-1.5 text-sm font-medium text-white hover:bg-sollos-navy-dark"
-            >
-              Add
-            </button>
+          </FormField>
+          <div className="flex items-end gap-2">
+            <PrimaryButton type="submit" className="flex-1">
+              {editingId ? "Save" : "Add"}
+            </PrimaryButton>
+            {editingId && <GhostButton onClick={resetForm}>Cancel</GhostButton>}
           </div>
         </div>
-        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
-          Revenue and gross profit use the current{" "}
-          <Link href="/pricing" className="underline hover:text-sollos-navy dark:hover:text-sollos-yellow">
+
+        <p aria-live="polite" className="mt-3 min-h-4 text-xs">
+          {problems.length > 0 ? (
+            <span className="font-medium text-sollos-orange">{problems[0].message}</span>
+          ) : status ? (
+            <span className="font-medium text-sollos-good">{status}</span>
+          ) : null}
+        </p>
+
+        <p className="mt-1 text-xs text-sollos-navy/45">
+          Booked at the current{" "}
+          <Link href="/pricing" className="underline underline-offset-4 hover:text-sollos-navy">
             pricing
-          </Link>
-          . Changing pricing later does not change entries already added here. Data added here
-          is saved to this browser. Team-wide syncing will come with the SOLLOS team login.
+          </Link>{" "}
+          (${pricing.srp.toFixed(2)} SRP, ${pricing.caseCost.toFixed(2)} a case). Each period
+          keeps the price it was entered at. Saved to this browser until team login ships.
         </p>
       </form>
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+function FormField({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-      <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-black dark:text-zinc-50">{value}</p>
-    </div>
+    <label className="block text-xs font-medium text-sollos-navy/60">
+      <span className={error ? "text-sollos-orange" : undefined}>{label}</span>
+      <span className="mt-1.5 block">{children}</span>
+    </label>
   );
 }

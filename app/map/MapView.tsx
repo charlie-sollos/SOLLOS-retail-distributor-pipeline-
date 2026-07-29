@@ -65,7 +65,7 @@ export function MapView({
       bounds={initialBounds}
       boundsOptions={{ padding: [30, 30] }}
       scrollWheelZoom
-      className="h-[70vh] w-full rounded-lg border border-zinc-200 dark:border-zinc-800"
+      className="h-[65vh] w-full overflow-hidden rounded-2xl border border-sollos-navy/10"
     >
       <FitBounds locations={locations} focusLoc={focusLoc} />
       <TileLayer
@@ -92,13 +92,13 @@ export function MapView({
                   href={loc.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sollos-navy underline"
+                  className="font-medium text-sollos-navy underline"
                 >
                   Website
                 </a>
               )}
               {loc.approximate && (
-                <p className="mt-1 text-xs text-zinc-500">Approximate location</p>
+                <p className="mt-1 text-xs text-sollos-navy/50">Approximate location</p>
               )}
             </div>
           </Popup>
