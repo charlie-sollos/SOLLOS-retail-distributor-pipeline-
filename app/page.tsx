@@ -29,6 +29,7 @@ export default function Home() {
     const d = daysStale(r);
     return d !== null && d > STALE_AFTER_DAYS;
   });
+  const shippedNotSelling = rows.filter((r) => r.shipmentSignal.stale);
 
   const totalUnits = withData.reduce((s, r) => s + r.summary.totalUnits, 0);
   const sollosRevenue = withData.reduce((s, r) => s + r.summary.totalSollosRevenue, 0);
@@ -96,16 +97,25 @@ export default function Home() {
 
       <section className="mb-10">
         <SectionHeading>Needs attention</SectionHeading>
-        {declining.length === 0 && growing.length === 0 && stale.length === 0 ? (
+        {declining.length === 0 &&
+        growing.length === 0 &&
+        stale.length === 0 &&
+        shippedNotSelling.length === 0 ? (
           <EmptyState title="Nothing needs attention">
             Once a few doors have two or more periods on record, slowdowns and breakouts
             show up here.
           </EmptyState>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <AlertCard tone="declining" title="Slowing down" rows={declining} />
             <AlertCard tone="growing" title="Room to amp up" rows={growing} />
             <AlertCard tone="stale" title="Gone quiet" rows={stale} note="No report in 2 weeks" />
+            <AlertCard
+              tone="shipped"
+              title="Shipped, not selling"
+              rows={shippedNotSelling}
+              note="No sell-through since the last case landed"
+            />
           </div>
         )}
       </section>
@@ -187,6 +197,7 @@ const alertRail: Record<string, string> = {
   declining: "border-t-sollos-orange",
   growing: "border-t-sollos-good",
   stale: "border-t-sollos-navy/35",
+  shipped: "border-t-sollos-orange",
 };
 
 function AlertCard({
@@ -195,7 +206,7 @@ function AlertCard({
   rows,
   note,
 }: {
-  tone: "declining" | "growing" | "stale";
+  tone: "declining" | "growing" | "stale" | "shipped";
   title: string;
   rows: StoreRow[];
   note?: string;

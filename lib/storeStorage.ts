@@ -1,14 +1,19 @@
 import type { VelocityEntry } from "@/lib/velocity";
+import type { ShipmentEntry } from "@/lib/shipments";
 import type { StoreLocation } from "@/lib/locations";
 import velocitySeed from "@/data/velocity-seed.json";
+import shipmentsSeed from "@/data/shipments-seed.json";
 
 const ENTRIES_PREFIX = "sollos:velocity:";
+const SHIPMENTS_PREFIX = "sollos:shipments:";
 const NOTES_PREFIX = "sollos:notes:";
 const STORE_OVERRIDE_PREFIX = "sollos:store-override:";
 const CUSTOM_STORES_KEY = "sollos:custom-stores";
 const HIDDEN_SEED_PREFIX = "sollos:hidden-seed:";
+const HIDDEN_SEED_SHIPMENT_PREFIX = "sollos:hidden-seed-shipment:";
 
 const seed = velocitySeed as Record<string, VelocityEntry[]>;
+const shipmentSeed = shipmentsSeed as Record<string, ShipmentEntry[]>;
 
 /**
  * Every read is defensive and every write is guarded. This is browser storage:
@@ -100,6 +105,64 @@ function hideSeedEntry(storeId: string, entryId: string): boolean {
   const hidden = hiddenSeedIds(storeId);
   if (hidden.includes(entryId)) return true;
   return writeJson(HIDDEN_SEED_PREFIX + storeId, [...hidden, entryId]);
+}
+
+function hiddenSeedShipmentIds(storeId: string): string[] {
+  return readJson<string[]>(HIDDEN_SEED_SHIPMENT_PREFIX + storeId, []);
+}
+
+export function getSeedShipments(storeId: string): ShipmentEntry[] {
+  const hidden = new Set(hiddenSeedShipmentIds(storeId));
+  return (shipmentSeed[storeId] ?? []).filter((e) => !hidden.has(e.id!));
+}
+
+export function getMergedShipments(storeId: string): ShipmentEntry[] {
+  return [...getSeedShipments(storeId), ...loadLocalShipments(storeId)];
+}
+
+export function loadLocalShipments(storeId: string): ShipmentEntry[] {
+  const rows = readJson<ShipmentEntry[]>(SHIPMENTS_PREFIX + storeId, []);
+  return Array.isArray(rows)
+    ? rows.filter((e) => e && typeof e.date === "string" && typeof e.cases === "number")
+    : [];
+}
+
+export function saveLocalShipments(storeId: string, entries: ShipmentEntry[]): boolean {
+  return writeJson(SHIPMENTS_PREFIX + storeId, entries);
+}
+
+export function addShipment(storeId: string, entry: ShipmentEntry): boolean {
+  return saveLocalShipments(storeId, [...loadLocalShipments(storeId), entry]);
+}
+
+export function updateShipment(storeId: string, entry: ShipmentEntry): boolean {
+  const local = loadLocalShipments(storeId);
+  const i = local.findIndex((e) => e.id === entry.id);
+  if (i === -1) {
+    // Editing a seed row: hide the original and keep the edit locally.
+    hideSeedShipment(storeId, entry.id!);
+    return addShipment(storeId, entry);
+  }
+  const next = [...local];
+  next[i] = entry;
+  return saveLocalShipments(storeId, next);
+}
+
+export function deleteShipment(storeId: string, entryId: string): boolean {
+  const local = loadLocalShipments(storeId);
+  if (local.some((e) => e.id === entryId)) {
+    return saveLocalShipments(
+      storeId,
+      local.filter((e) => e.id !== entryId)
+    );
+  }
+  return hideSeedShipment(storeId, entryId);
+}
+
+function hideSeedShipment(storeId: string, entryId: string): boolean {
+  const hidden = hiddenSeedShipmentIds(storeId);
+  if (hidden.includes(entryId)) return true;
+  return writeJson(HIDDEN_SEED_SHIPMENT_PREFIX + storeId, [...hidden, entryId]);
 }
 
 export function loadNotes(storeId: string): string {

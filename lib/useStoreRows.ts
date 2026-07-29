@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { locations, type StoreLocation } from "@/lib/locations";
 import {
   getMergedEntries,
+  getMergedShipments,
   getEffectiveLocation,
   loadCustomStores,
 } from "@/lib/storeStorage";
@@ -13,10 +14,12 @@ import {
   weeklyCasesEstimate,
   type VelocityEntry,
 } from "@/lib/velocity";
+import { mostRecentShipment, shipmentStalenessSignal } from "@/lib/shipments";
 import { loadPricing } from "@/lib/pricing";
 
 function buildRow(loc: StoreLocation, caseSize: number) {
   const entries: VelocityEntry[] = getMergedEntries(loc.id);
+  const shipments = getMergedShipments(loc.id);
   const summary = summarize(entries);
   const signal = trendSignal(entries);
   const casesPerWeek = weeklyCasesEstimate(summary.avgUnitsPerDay, caseSize);
@@ -30,6 +33,8 @@ function buildRow(loc: StoreLocation, caseSize: number) {
     lastReported: entries.length
       ? entries.reduce((a, e) => (e.weekEnd > a ? e.weekEnd : a), entries[0].weekEnd)
       : null,
+    lastShipment: mostRecentShipment(shipments),
+    shipmentSignal: shipmentStalenessSignal(shipments, entries),
   };
 }
 
