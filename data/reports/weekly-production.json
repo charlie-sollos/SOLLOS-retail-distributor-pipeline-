@@ -1,0 +1,63 @@
+{
+  "placeholder": true,
+  "sourceFile": "Weekly Production Report.xlsx",
+  "receivedOn": "2026-08-04",
+  "entries": [
+    {
+      "id": "wp_1",
+      "completedBy": "john smith",
+      "dateCompleted": null,
+      "status": "Running",
+      "batchNumber": "5",
+      "plannedCases": 5,
+      "actualCases": 4,
+      "nextProductionDate": "2026-08-12",
+      "finishedGoodsCases": 4,
+      "casesShippedThisWeek": 3,
+      "nextShipmentDate": "2026-08-14",
+      "notes": "no"
+    },
+    {
+      "id": "wp_2",
+      "completedBy": "steve",
+      "dateCompleted": null,
+      "status": "Not Running",
+      "batchNumber": "5",
+      "plannedCases": 5,
+      "actualCases": 5,
+      "nextProductionDate": "2026-08-20",
+      "finishedGoodsCases": 8,
+      "casesShippedThisWeek": 9,
+      "nextShipmentDate": "2026-08-27",
+      "notes": "yes"
+    },
+    {
+      "id": "wp_3",
+      "completedBy": "John Doe",
+      "dateCompleted": null,
+      "status": "Running",
+      "batchNumber": "4",
+      "plannedCases": 4,
+      "actualCases": 4,
+      "nextProductionDate": "2026-08-20",
+      "finishedGoodsCases": 3,
+      "casesShippedThisWeek": 2,
+      "nextShipmentDate": "2026-08-25",
+      "notes": "no"
+    },
+    {
+      "id": "wp_4",
+      "completedBy": "Jane Doe",
+      "dateCompleted": "2026-08-04",
+      "status": "Running",
+      "batchNumber": "4",
+      "plannedCases": 4,
+      "actualCases": 3,
+      "nextProductionDate": "2026-08-28",
+      "finishedGoodsCases": 6,
+      "casesShippedThisWeek": 2,
+      "nextShipmentDate": "2026-08-28",
+      "notes": "yes"
+    }
+  ]
+}
