@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     template: "%s | SOLLOS Pipeline",
   },
   description: "SOLLOS retail and distributor pipeline tracker",
+  // An internal ops tool. Even once it sits behind a login, it should never be
+  // something a search engine has a copy of. Paired with app/robots.ts.
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export default function RootLayout({

@@ -21,7 +21,7 @@
       "region": "Florida",
       "cases": 300,
       "confirmed": false,
-      "note": "Approximate. Stephen Hall or Spencer Bernstein to confirm."
+      "note": "Approximate. Awaiting confirmation from the Florida team."
     },
     {
       "id": "wh_longisland",
@@ -29,7 +29,7 @@
       "region": "New York",
       "cases": 50,
       "confirmed": false,
-      "note": "Approximate. Rodolfo Castillo to confirm."
+      "note": "Approximate. Awaiting confirmation from the Long Island team."
     }
   ],
   "production": [
