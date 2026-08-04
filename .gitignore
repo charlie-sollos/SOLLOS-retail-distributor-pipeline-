@@ -44,3 +44,8 @@ next-env.d.ts
 # Vercel deployment are both public, and these are other businesses' invoice
 # amounts and payment status, not SOLLOS's own figures.
 data/*.local.json
+
+# .env* above already ignores every local env file, which is what we want for
+# AUTH_PASSWORD and AUTH_SECRET: those belong in the Vercel project settings,
+# never in the repo. The template carries names only, so it is tracked.
+!.env.example

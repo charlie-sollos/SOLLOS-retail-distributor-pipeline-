@@ -15,6 +15,8 @@ const NAV_LINKS = [
 
 export function Header() {
   const pathname = usePathname();
+  // No nav on the sign-in screen: every link there would bounce straight back.
+  const signedOut = pathname === "/login";
 
   return (
     <header className="sticky top-0 z-50 border-b border-sollos-navy/10 bg-sollos-cream/85 backdrop-blur-md">
@@ -30,6 +32,7 @@ export function Header() {
         </Link>
         {/* Six tabs no longer fit a narrow window, so the nav scrolls sideways
             rather than clipping the last one off the edge. */}
+        {signedOut ? null : (
         <nav
           aria-label="Main"
           className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -76,7 +79,16 @@ export function Header() {
               </Link>
             );
           })}
+          <form action="/api/auth/logout" method="POST" className="ml-1 shrink-0">
+            <button
+              type="submit"
+              className="whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-sollos-navy/45 transition-colors hover:bg-sollos-navy/6 hover:text-sollos-navy"
+            >
+              Sign out
+            </button>
+          </form>
         </nav>
+        )}
       </div>
     </header>
   );
