@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { StoreLocation } from "@/lib/locations";
+import { CHANNEL_LABELS, channelOf, type StoreLocation } from "@/lib/locations";
 import {
   deleteCustomStore,
   loadStoreOverride,
@@ -104,9 +104,16 @@ export function StoreHeader({ store }: { store: StoreLocation }) {
           </h1>
           {addressLine && <p className="mt-1.5 text-sm text-sollos-navy/60">{addressLine}</p>}
         </div>
-        <span className="rounded-full bg-sollos-good/12 px-2.5 py-1 text-xs font-medium text-sollos-good">
-          Live
-        </span>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {channelOf(store) !== "dsd" && (
+            <span className="rounded-full bg-sollos-navy/8 px-2.5 py-1 text-xs font-medium text-sollos-navy/60">
+              {CHANNEL_LABELS[channelOf(store)]}
+            </span>
+          )}
+          <span className="rounded-full bg-sollos-good/12 px-2.5 py-1 text-xs font-medium text-sollos-good">
+            Live
+          </span>
+        </div>
       </div>
 
       {/* Field actions. A rep standing in the store wants to call or navigate, not read. */}

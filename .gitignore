@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Customer billing pulled from QuickBooks. Never commit: the repo and the
+# Vercel deployment are both public, and these are other businesses' invoice
+# amounts and payment status, not SOLLOS's own figures.
+data/*.local.json

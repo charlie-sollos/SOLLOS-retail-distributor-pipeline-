@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { locations } from "@/lib/locations";
+import { CHANNEL_LABELS, locations, type Channel } from "@/lib/locations";
 import { addCustomStore, loadCustomStores } from "@/lib/storeStorage";
-import { Page, PageTitle, PrimaryButton, Field } from "@/components/ui";
+import { Page, PageTitle, PrimaryButton, Field, inputClass } from "@/components/ui";
 
 type FormState = {
   name: string;
+  channel: Channel;
   address1: string;
   city: string;
   state: string;
@@ -19,6 +20,7 @@ type FormState = {
 
 const EMPTY: FormState = {
   name: "",
+  channel: "dsd",
   address1: "",
   city: "",
   state: "",
@@ -91,6 +93,7 @@ export default function NewStorePage() {
     const ok = addCustomStore({
       id,
       name: form.name.trim(),
+      channel: form.channel,
       address1: form.address1.trim(),
       city: form.city.trim(),
       state: form.state.trim(),
@@ -133,6 +136,23 @@ export default function NewStorePage() {
           <Field label="State (required)" value={form.state} onChange={field("state")} placeholder="FL" />
           <Field label="Zip" value={form.zip} onChange={field("zip")} />
           <Field label="Website" value={form.website} onChange={field("website")} />
+          <label className="block text-xs font-medium text-sollos-navy/60">
+            Channel
+            <select
+              value={form.channel}
+              onChange={(e) => setForm((f) => ({ ...f, channel: e.target.value as Channel }))}
+              className={`mt-1.5 ${inputClass}`}
+            >
+              {(Object.keys(CHANNEL_LABELS) as Channel[]).map((c) => (
+                <option key={c} value={c}>
+                  {CHANNEL_LABELS[c]}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block font-normal text-sollos-navy/45">
+              Only direct store accounts feed the velocity and restock signals.
+            </span>
+          </label>
         </div>
 
         {possibleDuplicate && (

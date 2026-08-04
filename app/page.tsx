@@ -4,6 +4,9 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useStoreRows, daysStale, type StoreRow } from "@/lib/useStoreRows";
 import { aggregateByWeek, toneStyle } from "@/lib/velocity";
+import { effectiveWarehouses, reorderCoverage, totalStock } from "@/lib/inventory";
+import { useWarehouseOverrides } from "@/lib/useWarehouseOverrides";
+import { DEFAULT_PRICING } from "@/lib/pricing";
 import { SalesChart } from "@/components/SalesChart";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
 import {
@@ -20,24 +23,33 @@ const STALE_AFTER_DAYS = 14;
 
 export default function Home() {
   const { rows } = useStoreRows();
+  const warehouseOverrides = useWarehouseOverrides();
 
-  const withData = rows.filter((r) => r.entries.length > 0);
-  const needsData = rows.filter((r) => r.entries.length === 0);
+  // Every signal below describes a door's sell-through. A distributor moves a
+  // pallet at a time and a DTC order has no shelf at all, so neither belongs in
+  // a coverage percentage, a leaderboard, or a restock call.
+  const doors = rows.filter((r) => r.channel === "dsd");
+  const otherChannels = rows.filter((r) => r.channel !== "dsd");
+
+  const withData = doors.filter((r) => r.entries.length > 0);
+  const needsData = doors.filter((r) => r.entries.length === 0);
   const declining = withData.filter((r) => r.signal.tone === "declining");
   const growing = withData.filter((r) => r.signal.tone === "growing");
   const stale = withData.filter((r) => {
     const d = daysStale(r);
     return d !== null && d > STALE_AFTER_DAYS;
   });
-  const shippedNotSelling = rows.filter((r) => r.shipmentSignal.stale);
-  const reorderNow = rows.filter((r) => r.restock?.tone === "urgent");
+  const shippedNotSelling = doors.filter((r) => r.shipmentSignal.stale);
+  const reorderNow = doors.filter((r) => r.restock?.tone === "urgent");
+  // Doors whose invoices contradict the case cost their figures are computed from.
+  const pricingUnconfirmed = rows.filter((r) => r.pricing.conflict !== null);
 
   const totalUnits = withData.reduce((s, r) => s + r.summary.totalUnits, 0);
   const sollosRevenue = withData.reduce((s, r) => s + r.summary.totalSollosRevenue, 0);
   const casesPerWeek = withData.reduce((s, r) => s + r.casesPerWeek, 0);
 
   const weeklySales = useMemo(
-    () => aggregateByWeek(rows.flatMap((r) => r.entries)),
+    () => aggregateByWeek(rows.filter((r) => r.channel === "dsd").flatMap((r) => r.entries)),
     [rows]
   );
 
@@ -45,27 +57,53 @@ export default function Home() {
     .sort((a, b) => b.summary.avgUnitsPerDay - a.summary.avgUnitsPerDay)
     .slice(0, 5);
 
-  const coverage = rows.length ? withData.length / rows.length : 0;
+  const dataCoverage = doors.length ? withData.length / doors.length : 0;
+
+  // Whether the warehouse can actually fill what the reorder queue is asking for.
+  const casesNeeded = reorderNow.reduce((sum, r) => sum + r.casesNeeded, 0);
+  const coverage = reorderCoverage(
+    casesNeeded,
+    totalStock(effectiveWarehouses(warehouseOverrides), DEFAULT_PRICING.caseSize)
+  );
 
   return (
     <Page>
       <PageTitle title="Overview" subtitle="Retail and distributor footprint at a glance" />
 
       <section className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        <Stat label="Live doors" value={rows.length} />
+        <Stat label="Live doors" value={doors.length} />
         <Stat
           label="Reporting"
           value={withData.length}
-          unit={`of ${rows.length}`}
-          hint={`${Math.round(coverage * 100)}% coverage`}
+          unit={`of ${doors.length}`}
+          hint={`${Math.round(dataCoverage * 100)}% coverage`}
         />
         <Stat label="Cans sold" value={totalUnits.toLocaleString()} />
         <Stat
           label="SOLLOS revenue"
           value={`$${sollosRevenue.toFixed(0)}`}
-          hint="Billed at case cost"
+          hint={
+            pricingUnconfirmed.length > 0
+              ? `Est. ${pricingUnconfirmed.length} doors unpriced`
+              : "Billed at case cost"
+          }
         />
       </section>
+
+      {/* Named rather than folded in, so nobody reads a distributor pallet as shelf movement. */}
+      {otherChannels.length > 0 && (
+        <p className="-mt-6 mb-10 text-sm text-sollos-navy/55">
+          Plus{" "}
+          <Link
+            href="/pipeline?channel=distributor"
+            className="font-medium underline decoration-sollos-navy/25 underline-offset-4 hover:text-sollos-navy"
+          >
+            {otherChannels.length} non-door {otherChannels.length === 1 ? "account" : "accounts"}
+          </Link>
+          , held out of every figure above. Distributor and DTC volume says nothing about
+          sell-through at a shelf.
+        </p>
+      )}
 
       {/* Getting data in is the single most valuable action, so lead with it. */}
       {needsData.length > 0 && (
@@ -75,14 +113,14 @@ export default function Home() {
             <div className="relative">
               <p className="eyebrow mb-2">Biggest gap</p>
               <p className="text-2xl font-semibold tracking-[-0.02em] text-sollos-navy">
-                {withData.length} of {rows.length} doors are reporting
+                {withData.length} of {doors.length} doors are reporting
               </p>
               <p className="mt-1.5 max-w-xl text-sm text-sollos-navy/60">
                 Velocity is what drives every restock and every amp-up call. Until a door
                 reports, it is invisible to the leaderboard and the alerts below.
               </p>
               <div className="mt-4 max-w-sm">
-                <Meter value={withData.length} max={rows.length} />
+                <Meter value={withData.length} max={doors.length} />
               </div>
               <Link
                 href="/pipeline?data=Needs%20Data"
@@ -102,7 +140,8 @@ export default function Home() {
         growing.length === 0 &&
         stale.length === 0 &&
         shippedNotSelling.length === 0 &&
-        reorderNow.length === 0 ? (
+        reorderNow.length === 0 &&
+        pricingUnconfirmed.length === 0 ? (
           <EmptyState title="Nothing needs attention">
             Once a few doors have two or more periods on record, slowdowns and breakouts
             show up here.
@@ -113,7 +152,11 @@ export default function Home() {
               tone="urgent"
               title="Reorder now"
               rows={reorderNow}
-              note="A week or less of cover left, at the current rate"
+              note={
+                reorderNow.length > 0
+                  ? `${casesNeeded} cases to fill. ${coverage.label}`
+                  : "A week or less of cover left, at the current rate"
+              }
             />
             <AlertCard tone="declining" title="Slowing down" rows={declining} />
             <AlertCard tone="growing" title="Room to amp up" rows={growing} />
@@ -123,6 +166,12 @@ export default function Home() {
               title="Shipped, not selling"
               rows={shippedNotSelling}
               note="No sell-through since the last case landed"
+            />
+            <AlertCard
+              tone="pricing"
+              title="Pricing unconfirmed"
+              rows={pricingUnconfirmed}
+              note="Invoiced amounts do not match the case cost in use"
             />
           </div>
         )}
@@ -142,7 +191,7 @@ export default function Home() {
               href="/pipeline"
               className="text-sm font-medium text-sollos-navy/70 underline decoration-sollos-navy/25 underline-offset-4 transition-colors hover:text-sollos-navy"
             >
-              All {rows.length} doors
+              All {doors.length} doors
             </Link>
           }
         >
@@ -207,6 +256,7 @@ const alertRail: Record<string, string> = {
   stale: "border-t-sollos-navy/35",
   shipped: "border-t-sollos-orange",
   urgent: "border-t-sollos-orange",
+  pricing: "border-t-sollos-navy/35",
 };
 
 function AlertCard({
@@ -215,7 +265,7 @@ function AlertCard({
   rows,
   note,
 }: {
-  tone: "declining" | "growing" | "stale" | "shipped" | "urgent";
+  tone: "declining" | "growing" | "stale" | "shipped" | "urgent" | "pricing";
   title: string;
   rows: StoreRow[];
   note?: string;

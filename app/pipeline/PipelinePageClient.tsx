@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { normalizeState } from "@/lib/locations";
+import { CHANNEL_LABELS, normalizeState, type Channel } from "@/lib/locations";
 import { useStoreRows, type StoreRow } from "@/lib/useStoreRows";
 import { toneStyle } from "@/lib/velocity";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
@@ -11,6 +11,13 @@ import { Page, PageTitle, PrimaryLink, GhostButton, inputClass } from "@/compone
 
 const DATA_FILTERS = ["All", "Has Data", "Needs Data"] as const;
 type DataFilter = (typeof DATA_FILTERS)[number];
+
+const CHANNEL_FILTERS = ["All", "dsd", "distributor", "dtc"] as const;
+type ChannelFilter = (typeof CHANNEL_FILTERS)[number];
+
+function isChannelFilter(value: string | null): value is ChannelFilter {
+  return (CHANNEL_FILTERS as readonly string[]).includes(value ?? "");
+}
 
 const SORTS = {
   name: { label: "Name", fn: (a: StoreRow, b: StoreRow) => a.loc.name.localeCompare(b.loc.name) },
@@ -38,6 +45,7 @@ function isDataFilter(value: string | null): value is DataFilter {
 export function PipelinePageClient() {
   const searchParams = useSearchParams();
   const initialDataFilter = searchParams.get("data");
+  const initialChannel = searchParams.get("channel");
 
   const { rows } = useStoreRows();
   const [search, setSearch] = useState("");
@@ -45,11 +53,15 @@ export function PipelinePageClient() {
   const [dataFilter, setDataFilter] = useState<DataFilter>(
     isDataFilter(initialDataFilter) ? initialDataFilter : "All"
   );
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>(
+    isChannelFilter(initialChannel) ? initialChannel : "All"
+  );
   const [sort, setSort] = useState<SortKey>("name");
 
   useEffect(() => {
     if (isDataFilter(initialDataFilter)) setDataFilter(initialDataFilter);
-  }, [initialDataFilter]);
+    if (isChannelFilter(initialChannel)) setChannelFilter(initialChannel);
+  }, [initialDataFilter, initialChannel]);
 
   const states = useMemo(() => {
     const unique = new Set(rows.map((r) => normalizeState(r.loc.state)));
@@ -69,24 +81,36 @@ export function PipelinePageClient() {
       if (stateFilter !== "All" && normalizeState(r.loc.state) !== stateFilter) return false;
       if (dataFilter === "Has Data" && r.entries.length === 0) return false;
       if (dataFilter === "Needs Data" && r.entries.length > 0) return false;
+      if (channelFilter !== "All" && r.channel !== channelFilter) return false;
       return true;
     });
     return out.sort(SORTS[sort].fn);
-  }, [rows, search, stateFilter, dataFilter, sort]);
+  }, [rows, search, stateFilter, dataFilter, channelFilter, sort]);
 
-  const filtersActive = search !== "" || stateFilter !== "All" || dataFilter !== "All";
+  // A distributor is not a door, so it is counted alongside rather than within.
+  const doorCount = rows.filter((r) => r.channel === "dsd").length;
+  const otherCount = rows.length - doorCount;
+  const subtitle =
+    `${doorCount} live ${doorCount === 1 ? "door" : "doors"} across ${states.length - 1} states` +
+    (otherCount > 0
+      ? `, plus ${otherCount} non-door ${otherCount === 1 ? "account" : "accounts"}`
+      : "");
+
+  const filtersActive =
+    search !== "" || stateFilter !== "All" || dataFilter !== "All" || channelFilter !== "All";
 
   function clearFilters() {
     setSearch("");
     setStateFilter("All");
     setDataFilter("All");
+    setChannelFilter("All");
   }
 
   return (
     <Page>
       <PageTitle
         title="Pipeline"
-        subtitle={`${rows.length} live doors across ${states.length - 1} states`}
+        subtitle={subtitle}
         action={<PrimaryLink href="/stores/new">Add store</PrimaryLink>}
       />
 
@@ -111,6 +135,15 @@ export function PipelinePageClient() {
             value={dataFilter}
             onChange={(v) => setDataFilter(v as DataFilter)}
             options={DATA_FILTERS.map((f) => ({ value: f, label: f }))}
+          />
+          <Select
+            label="Channel"
+            value={channelFilter}
+            onChange={(v) => setChannelFilter(v as ChannelFilter)}
+            options={CHANNEL_FILTERS.map((c) => ({
+              value: c,
+              label: c === "All" ? "All channels" : CHANNEL_LABELS[c as Channel],
+            }))}
           />
           <Select
             label="Sort by"
@@ -142,6 +175,7 @@ export function PipelinePageClient() {
                       <p className="truncate font-semibold text-sollos-navy">{row.loc.name}</p>
                       <p className="mt-0.5 text-xs text-sollos-navy/50">
                         {row.loc.city}, {normalizeState(row.loc.state)}
+                        {row.channel !== "dsd" && ` · ${CHANNEL_LABELS[row.channel]}`}
                       </p>
                     </div>
                     {row.entries.length > 0 ? (
@@ -189,6 +223,11 @@ export function PipelinePageClient() {
                       >
                         {row.loc.name}
                       </Link>
+                      {row.channel !== "dsd" && (
+                        <span className="ml-2 rounded-full bg-sollos-navy/8 px-2 py-0.5 text-[11px] font-medium text-sollos-navy/60">
+                          {CHANNEL_LABELS[row.channel]}
+                        </span>
+                      )}
                     </Td>
                     <Td>{row.loc.city}</Td>
                     <Td muted>{normalizeState(row.loc.state)}</Td>

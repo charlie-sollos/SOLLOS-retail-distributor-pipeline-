@@ -76,6 +76,24 @@ export function restockSignal(onHandUnits: number, unitsPerDay: number): Restock
   };
 }
 
+/**
+ * Cases needed to bring a door back up to a working level of cover.
+ *
+ * Targets REORDER_SOON_DAYS rather than some round number of cases, so the
+ * figure means the same thing as the signal that raised it: enough that the
+ * door stops being a reorder. Rounds up, since a part case is not shippable.
+ */
+export function casesToTopUp(
+  unitsPerDay: number,
+  onHandUnits: number,
+  caseSize: number,
+  targetDays: number = REORDER_SOON_DAYS
+): number {
+  if (unitsPerDay <= 0 || caseSize <= 0) return 0;
+  const shortfall = unitsPerDay * targetDays - onHandUnits;
+  return shortfall <= 0 ? 0 : Math.ceil(shortfall / caseSize);
+}
+
 export const restockToneStyle: Record<RestockTone, string> = {
   urgent: "bg-sollos-orange/16 text-sollos-orange",
   soon: "bg-sollos-orange/8 text-sollos-orange/80",

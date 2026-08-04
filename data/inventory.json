@@ -1,0 +1,51 @@
+{
+  "asOf": "2026-08-04",
+  "warehouses": [
+    {
+      "id": "wh_njw",
+      "name": "NJW Warehouse",
+      "region": "New Jersey",
+      "cases": 1680,
+      "confirmed": true
+    },
+    {
+      "id": "wh_redstag",
+      "name": "RedStag Fulfillment",
+      "region": "Fulfillment",
+      "cases": 4331,
+      "confirmed": true
+    },
+    {
+      "id": "wh_wpb",
+      "name": "West Palm Beach",
+      "region": "Florida",
+      "cases": 300,
+      "confirmed": false,
+      "note": "Approximate. Stephen Hall or Spencer Bernstein to confirm."
+    },
+    {
+      "id": "wh_longisland",
+      "name": "Long Island Warehouse",
+      "region": "New York",
+      "cases": 50,
+      "confirmed": false,
+      "note": "Approximate. Rodolfo Castillo to confirm."
+    }
+  ],
+  "production": [
+    {
+      "id": "prod_2026_05",
+      "month": "2026-05",
+      "site": "1820",
+      "units": 116000,
+      "unitsAreCans": null
+    },
+    {
+      "id": "prod_2026_07",
+      "month": "2026-07",
+      "site": "1820",
+      "units": 39000,
+      "unitsAreCans": null
+    }
+  ]
+}

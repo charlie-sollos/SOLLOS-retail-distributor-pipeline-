@@ -20,7 +20,14 @@ import {
   type EntryProblem,
   type VelocityEntry,
 } from "@/lib/velocity";
-import { DEFAULT_PRICING, derivePricing, loadPricing, type Pricing } from "@/lib/pricing";
+import { derivePricing, loadPricing } from "@/lib/pricing";
+import {
+  resolvePricing,
+  resolvePricingStatic,
+  saveAccountCaseCost,
+  type PricingResolution,
+} from "@/lib/accountPricing";
+import { AccountPricing } from "./AccountPricing";
 import { VelocityChart } from "./VelocityChart";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
 import {
@@ -36,7 +43,9 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 
 export function StoreVelocity({ storeId }: { storeId: string }) {
   const [entries, setEntries] = useState<VelocityEntry[]>([]);
-  const [pricing, setPricing] = useState<Pricing>(DEFAULT_PRICING);
+  const [resolution, setResolution] = useState<PricingResolution>(() =>
+    resolvePricingStatic(storeId)
+  );
   const [weekStart, setWeekStart] = useState("");
   const [weekEnd, setWeekEnd] = useState("");
   const [unitsSold, setUnitsSold] = useState("");
@@ -46,9 +55,10 @@ export function StoreVelocity({ storeId }: { storeId: string }) {
 
   useEffect(() => {
     setEntries(getMergedEntries(storeId));
-    setPricing(loadPricing());
+    setResolution(resolvePricing(storeId, loadPricing()));
   }, [storeId]);
 
+  const pricing = resolution.pricing;
   const sorted = useMemo(() => sortByWeek(entries), [entries]);
   const summary = summarize(sorted);
   const signal = trendSignal(sorted);
@@ -136,9 +146,13 @@ export function StoreVelocity({ storeId }: { storeId: string }) {
         <Stat label="Cases / wk" value={casesPerWeek} hint="At that rate" />
         <Stat label="Cans sold" value={summary.totalUnits} hint={`Over ${summary.totalDays} days`} />
         <Stat
-          label="SOLLOS revenue"
+          label={resolution.conflict ? "SOLLOS revenue (est.)" : "SOLLOS revenue"}
           value={`$${summary.totalSollosRevenue.toFixed(2)}`}
-          hint={`Retail $${summary.totalRevenue.toFixed(2)}`}
+          hint={
+            resolution.conflict
+              ? "Case cost unconfirmed, see below"
+              : `Retail $${summary.totalRevenue.toFixed(2)}`
+          }
         />
       </div>
 
@@ -276,14 +290,25 @@ export function StoreVelocity({ storeId }: { storeId: string }) {
         </p>
 
         <p className="mt-1 text-xs text-sollos-navy/45">
-          Booked at the current{" "}
-          <Link href="/pricing" className="underline underline-offset-4 hover:text-sollos-navy">
-            pricing
-          </Link>{" "}
-          (${pricing.srp.toFixed(2)} SRP, ${pricing.caseCost.toFixed(2)} a case). Each period
-          keeps the price it was entered at. Saved to this browser until team login ships.
+          Booked at ${pricing.srp.toFixed(2)} SRP and ${pricing.caseCost.toFixed(2)} a case
+          {resolution.source === "account" ? " for this account" : ", the "}
+          {resolution.source === "global" && (
+            <Link href="/pricing" className="underline underline-offset-4 hover:text-sollos-navy">
+              network default
+            </Link>
+          )}
+          . Each period keeps the price it was entered at. Saved to this browser until team
+          login ships.
         </p>
       </form>
+
+      <AccountPricing
+        resolution={resolution}
+        onSave={(caseCost) => {
+          saveAccountCaseCost(storeId, caseCost);
+          setResolution(resolvePricing(storeId, loadPricing()));
+        }}
+      />
     </section>
   );
 }
