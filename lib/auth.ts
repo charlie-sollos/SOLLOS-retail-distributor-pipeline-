@@ -126,35 +126,109 @@ export async function verifySessionToken(
   return { email, expiresAtMs };
 }
 
-export type AuthConfig = { secret: string; password: string };
+/**
+ * The built-in credentials, so the app works on deploy with nothing to
+ * configure. This only holds up while the repository is private: anyone who can
+ * read this file can read BUILT_IN_SIGNING_SECRET, and with it forge a session
+ * cookie without ever seeing the login. A public repo makes this decorative.
+ *
+ * The password is stored as a PBKDF2 derivation rather than as text, so reading
+ * the file does not immediately hand over the password itself. That is a second
+ * line, not the first one. The first one is the repo being private.
+ *
+ * Setting AUTH_SECRET and AUTH_PASSWORD in the hosting environment overrides
+ * both of these, which is the better arrangement whenever it is worth the setup.
+ */
+const BUILT_IN_SIGNING_SECRET =
+  "b0674f004a8237eefcd279955ad2c2b62dc820c1b73e279c11cbaf613382fcf0";
+const BUILT_IN_PASSWORD_SALT = "Jl4HCfwFuzu1WT6G1RhE2Q==";
+const BUILT_IN_PASSWORD_HASH = "2lfnl+NzE41Bklux7Jjum59Yp+yd41bF0YAWGvdYAtQ=";
+const PBKDF2_ITERATIONS = 100_000;
+
+export type AuthConfig = {
+  secret: string;
+  /** Set when a plain password came from the environment. */
+  password?: string;
+  /** Set when falling back to the derivation compiled in above. */
+  passwordHash?: { salt: string; hash: string; iterations: number };
+};
 
 /**
- * Fails closed. If either secret is missing the app refuses every login rather
- * than falling back to a default, because a default password on a deployment
- * that is reachable from the internet is worse than a broken login.
+ * Prefers the environment and falls back to the built-in credentials, so there
+ * is no state in which the app is deployed but nobody can sign in. An
+ * AUTH_SECRET too short to be worth anything is ignored rather than trusted.
  */
-export function readAuthConfig(env: Record<string, string | undefined>): AuthConfig | null {
-  const secret = env.AUTH_SECRET;
-  const password = env.AUTH_PASSWORD;
-  if (!secret || !password) return null;
-  if (secret.length < 16) return null;
-  return { secret, password };
+export function readAuthConfig(env: Record<string, string | undefined>): AuthConfig {
+  const secret = env.AUTH_SECRET && env.AUTH_SECRET.length >= 16 ? env.AUTH_SECRET : null;
+  const password = env.AUTH_PASSWORD || null;
+
+  if (secret && password) return { secret, password };
+
+  return {
+    secret: secret ?? BUILT_IN_SIGNING_SECRET,
+    passwordHash: {
+      salt: BUILT_IN_PASSWORD_SALT,
+      hash: BUILT_IN_PASSWORD_HASH,
+      iterations: PBKDF2_ITERATIONS,
+    },
+  };
+}
+
+/** True when the app is running on credentials compiled into the source. */
+export function usingBuiltInCredentials(config: AuthConfig): boolean {
+  return config.passwordHash !== undefined;
+}
+
+function fromBase64(value: string): Uint8Array {
+  const binary = atob(value);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+  return out;
+}
+
+async function derive(
+  password: string,
+  salt: Uint8Array,
+  iterations: number
+): Promise<string> {
+  const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, [
+    "deriveBits",
+  ]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: salt as BufferSource, iterations, hash: "SHA-256" },
+    key,
+    256
+  );
+  return toBase64Url(new Uint8Array(bits));
 }
 
 export type LoginResult = { ok: true; email: string } | { ok: false; reason: string };
 
 /**
  * One message for every failure. Saying "no such user" would confirm which
- * addresses are real to anyone guessing.
+ * addresses are real to anyone working through a list.
+ *
+ * Both halves are always evaluated, so a wrong email and a wrong password take
+ * the same path and the same time.
  */
-export function checkCredentials(
+export async function checkCredentials(
   email: string,
   password: string,
   config: AuthConfig
-): LoginResult {
+): Promise<LoginResult> {
   const generic = { ok: false as const, reason: "That email and password did not match." };
+
   const emailOk = isAllowedEmail(email);
-  const passwordOk = constantTimeEqual(password, config.password);
+
+  let passwordOk = false;
+  if (config.password !== undefined) {
+    passwordOk = constantTimeEqual(password, config.password);
+  } else if (config.passwordHash) {
+    const { salt, hash, iterations } = config.passwordHash;
+    const candidate = await derive(password, fromBase64(salt), iterations);
+    passwordOk = constantTimeEqual(candidate, toBase64Url(fromBase64(hash)));
+  }
+
   if (!emailOk || !passwordOk) return generic;
   return { ok: true, email: normalizeEmail(email) };
 }

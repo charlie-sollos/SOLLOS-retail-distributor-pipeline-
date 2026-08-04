@@ -9,14 +9,9 @@ import { SESSION_COOKIE, readAuthConfig, verifySessionToken } from "@/lib/auth";
  * this kind of thing leaks, and this makes forgetting the safe direction.
  */
 export async function middleware(request: NextRequest) {
+  // Always resolves: the environment if it is set, the built-in credentials
+  // otherwise, so there is no deployed state where nobody can sign in.
   const config = readAuthConfig(process.env);
-
-  // Fail closed. Without the secrets set, the only reachable page is one that
-  // says so, rather than the app quietly serving itself unprotected.
-  if (!config) {
-    if (request.nextUrl.pathname === "/login") return NextResponse.next();
-    return NextResponse.redirect(new URL("/login?error=unconfigured", request.url));
-  }
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const session = await verifySessionToken(token, config.secret);

@@ -11,7 +11,6 @@ import { SESSION_COOKIE, readAuthConfig, verifySessionToken, type Session } from
  */
 export async function getSession(): Promise<Session | null> {
   const config = readAuthConfig(process.env);
-  if (!config) return null;
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   return verifySessionToken(token, config.secret);
 }

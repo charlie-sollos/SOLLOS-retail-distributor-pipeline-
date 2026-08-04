@@ -5,8 +5,6 @@ export const metadata: Metadata = { title: "Sign in" };
 
 const MESSAGES: Record<string, string> = {
   invalid: "That email and password did not match.",
-  unconfigured:
-    "Sign-in is not configured on this deployment yet. AUTH_SECRET and AUTH_PASSWORD need setting in the Vercel project.",
 };
 
 export default async function LoginPage({

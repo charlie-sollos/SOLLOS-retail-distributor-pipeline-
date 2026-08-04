@@ -28,9 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(url, { status: 303 });
   };
 
-  if (!config) return fail("unconfigured");
-
-  const result = checkCredentials(email, password, config);
+  const result = await checkCredentials(email, password, config);
   if (!result.ok) return fail("invalid");
 
   const expiresAtMs = Date.now() + SESSION_MAX_AGE_SECONDS * 1000;
