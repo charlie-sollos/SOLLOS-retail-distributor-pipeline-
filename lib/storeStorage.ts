@@ -12,6 +12,14 @@ const CUSTOM_STORES_KEY = "sollos:custom-stores";
 const HIDDEN_SEED_PREFIX = "sollos:hidden-seed:";
 const HIDDEN_SEED_SHIPMENT_PREFIX = "sollos:hidden-seed-shipment:";
 
+/**
+ * Ships empty for the same reason as the billing seed: the repo and the Vercel
+ * deployment are public, and this holds a named customer's weekly volume and
+ * SOLLOS's margin on it. Real figures live in data/velocity-seed.local.json,
+ * which is gitignored. Copy it over data/velocity-seed.json to work with them
+ * locally; the committed file is marked skip-worktree so that copy cannot be
+ * committed by accident.
+ */
 const seed = velocitySeed as Record<string, VelocityEntry[]>;
 const shipmentSeed = shipmentsSeed as Record<string, ShipmentEntry[]>;
 
