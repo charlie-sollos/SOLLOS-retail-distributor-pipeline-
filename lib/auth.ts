@@ -21,6 +21,7 @@ export const ALLOWED_EMAILS: string[] = [
   "charlie@drinksollos.com",
   "rodolfo@drinksollos.com",
   "dillon@drinksollos.com",
+  "jaseem@drinksollos.com",
 ];
 
 export const SESSION_COOKIE = "sollos_session";

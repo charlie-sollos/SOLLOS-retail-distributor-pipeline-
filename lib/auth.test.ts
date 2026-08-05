@@ -17,11 +17,12 @@ const CONFIG = { secret: SECRET, password: "correct horse battery staple" };
 const HOUR = 60 * 60 * 1000;
 
 describe("the allowlist", () => {
-  it("holds the three team addresses", () => {
+  it("holds the four team addresses", () => {
     expect(ALLOWED_EMAILS).toEqual([
       "charlie@drinksollos.com",
       "rodolfo@drinksollos.com",
       "dillon@drinksollos.com",
+      "jaseem@drinksollos.com",
     ]);
   });
 
@@ -94,7 +95,7 @@ describe("checkCredentials against an environment password", () => {
 describe("checkCredentials against the built-in derivation", () => {
   const builtIn = readAuthConfig({});
 
-  it("admits each of the three addresses with the team password", async () => {
+  it("admits each of the four addresses with the team password", async () => {
     for (const email of ALLOWED_EMAILS) {
       const r = await checkCredentials(email, TEAM_PASSWORD, builtIn);
       expect(r.ok).toBe(true);
