@@ -12,6 +12,7 @@ import {
 } from "@/lib/reports";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
 import { Page, PageTitle, SectionHeading, Stat, EmptyState } from "@/components/ui";
+import { SubjectAssignments } from "@/components/SubjectAssignments";
 
 export const metadata: Metadata = { title: "Weekly Distributor Inventory Report" };
 
@@ -45,6 +46,12 @@ export default function DistributorInventoryPage() {
           </p>
         </div>
       )}
+
+      <SubjectAssignments
+        subject={{ kind: "report", id: "distributor-inventory" }}
+        subjectLabel="Weekly Distributor Inventory Report"
+        heading="Who is on this report"
+      />
 
       {entries.length === 0 ? (
         <EmptyState title="No submissions yet">

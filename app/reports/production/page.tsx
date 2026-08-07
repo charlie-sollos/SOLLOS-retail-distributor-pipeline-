@@ -10,6 +10,7 @@ import {
 } from "@/lib/reports";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
 import { Page, PageTitle, SectionHeading, Stat, EmptyState } from "@/components/ui";
+import { SubjectAssignments } from "@/components/SubjectAssignments";
 
 export const metadata: Metadata = { title: "Weekly Production Report" };
 
@@ -51,6 +52,12 @@ export default function ProductionReportPage() {
           </p>
         </div>
       )}
+
+      <SubjectAssignments
+        subject={{ kind: "report", id: "production" }}
+        subjectLabel="Weekly Production Report"
+        heading="Who is on this report"
+      />
 
       {entries.length === 0 ? (
         <EmptyState title="No submissions yet">

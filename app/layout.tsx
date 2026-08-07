@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Silkscreen } from "next/font/google";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CurrentUserProvider } from "@/components/CurrentUser";
+import { getSession } from "@/lib/session";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,11 +40,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
-export default function RootLayout({
+/**
+ * Async because the header needs to know who is signed in: whose alerts to
+ * count, and whose name a message gets sent under. Reading the cookie here
+ * makes every page render per request, which is the right trade for a tool
+ * where every page is behind a login and personal to the reader anyway.
+ */
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+
   return (
     <html
       lang="en"
@@ -55,9 +65,11 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <Header />
-        {children}
-        <Footer />
+        <CurrentUserProvider email={session?.email ?? null}>
+          <Header />
+          {children}
+          <Footer />
+        </CurrentUserProvider>
       </body>
     </html>
   );
