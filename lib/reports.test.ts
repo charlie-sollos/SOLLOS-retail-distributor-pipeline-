@@ -6,8 +6,18 @@ import {
   productionReport,
   summarizeProduction,
   upcomingSchedule,
+  checkInDataGaps,
+  distributorDataGaps,
+  matchedDoorId,
+  skuMismatches,
+  summarizeCheckIn,
+  summarizeDistributor,
+  upcomingReorders,
+  type CheckInEntry,
+  type DistributorEntry,
   type ProductionEntry,
 } from "@/lib/reports";
+import { locations } from "@/lib/locations";
 
 const entry = (over: Partial<ProductionEntry> = {}): ProductionEntry => ({
   id: "e",
@@ -169,3 +179,144 @@ describe("the transcribed report", () => {
     expect(s.attainmentPct).toBe(88.9);
   });
 });
+
+const checkIn = (over: Partial<CheckInEntry> = {}): CheckInEntry => ({
+  id: "c",
+  accountManager: "someone",
+  accountName: "Nowhere Market",
+  dateCompleted: "2026-08-04",
+  sku: "Pineapple Coconut",
+  currentCases: 5,
+  expectedReorderDate: "2026-08-19",
+  expectedReorderCases: 4,
+  stockoutRisk: "Low",
+  promoComing: "No",
+  notes: "no",
+  ...over,
+});
+
+describe("summarizeCheckIn", () => {
+  it("counts a door once even when it files a row per flavour", () => {
+    const s = summarizeCheckIn([
+      checkIn({ id: "a", accountName: "Nowhere Market", sku: "Summer Peach", currentCases: 3 }),
+      checkIn({ id: "b", accountName: "nowhere market!", sku: "Lemon Mint", currentCases: 2 }),
+    ]);
+    expect(s.checkIns).toBe(2);
+    expect(s.accounts).toBe(1);
+    expect(s.casesOnHand).toBe(5);
+  });
+
+  it("surfaces High before Medium and leaves Low alone", () => {
+    const s = summarizeCheckIn([
+      checkIn({ id: "a", stockoutRisk: "Medium" }),
+      checkIn({ id: "b", stockoutRisk: "Low" }),
+      checkIn({ id: "c", stockoutRisk: "High" }),
+    ]);
+    expect(s.atRisk.map((e) => e.id)).toEqual(["c", "a"]);
+  });
+
+  it("reads a promotion only from a yes", () => {
+    const s = summarizeCheckIn([
+      checkIn({ id: "a", promoComing: "Yes" }),
+      checkIn({ id: "b", promoComing: "no" }),
+    ]);
+    expect(s.promos.map((e) => e.id)).toEqual(["a"]);
+  });
+});
+
+describe("matchedDoorId", () => {
+  it("does not attach a check-in to a door it does not name", () => {
+    expect(matchedDoorId("John Doe's Big Bucks")).toBeNull();
+  });
+
+  it("matches a real door across punctuation and casing", () => {
+    const door = locations[0];
+    expect(matchedDoorId(door.name.toUpperCase())).toBe(door.id);
+  });
+});
+
+describe("upcomingReorders", () => {
+  it("puts the soonest first and rows with no date last", () => {
+    const out = upcomingReorders([
+      checkIn({ id: "a", expectedReorderDate: "2026-08-25" }),
+      checkIn({ id: "b", expectedReorderDate: null }),
+      checkIn({ id: "c", expectedReorderDate: "2026-08-19" }),
+    ]);
+    expect(out.map((e) => e.id)).toEqual(["c", "a", "b"]);
+  });
+});
+
+const distributor = (over: Partial<DistributorEntry> = {}): DistributorEntry => ({
+  id: "d",
+  completedBy: "someone",
+  distributorName: "A Distributor",
+  dateCompleted: "2026-08-04",
+  skusOnHand: ["Pineapple Coconut"],
+  casesOnHand: { "Pineapple Coconut": 4 },
+  ordersReceived: 10,
+  ordersShipped: 2,
+  damaged: "No",
+  damagedAmount: 0,
+  notes: "no",
+  ...over,
+});
+
+describe("summarizeDistributor", () => {
+  it("adds cases sideways across flavours and distributors", () => {
+    const s = summarizeDistributor([
+      distributor({ casesOnHand: { "Pineapple Coconut": 4, "Summer Peach": 5, "Lemon Mint": 6 } }),
+      distributor({ id: "e", casesOnHand: { "Summer Peach": 1 } }),
+    ]);
+    expect(s.casesOnHand).toBe(16);
+    expect(s.bySku).toEqual([
+      { sku: "Pineapple Coconut", cases: 4 },
+      { sku: "Summer Peach", cases: 6 },
+      { sku: "Lemon Mint", cases: 6 },
+    ]);
+  });
+
+  it("counts damage from an amount even when the yes/no column says no", () => {
+    const s = summarizeDistributor([distributor({ damaged: "No", damagedAmount: 3 })]);
+    expect(s.damaged).toHaveLength(1);
+    expect(s.damagedAmount).toBe(3);
+  });
+});
+
+describe("skuMismatches", () => {
+  it("catches a flavour listed with no cases against it", () => {
+    const out = skuMismatches([
+      distributor({ skusOnHand: ["Pineapple Coconut", "Lemon Mint"] }),
+    ]);
+    expect(out).toEqual([
+      { entry: expect.anything(), sku: "Lemon Mint", kind: "listed-no-cases" },
+    ]);
+  });
+
+  it("catches cases reported for a flavour that was never listed", () => {
+    const out = skuMismatches([
+      distributor({ skusOnHand: [], casesOnHand: { "Summer Peach": 2 } }),
+    ]);
+    expect(out.map((m) => [m.sku, m.kind])).toEqual([["Summer Peach", "cases-not-listed"]]);
+  });
+
+  it("says nothing when the two columns agree", () => {
+    expect(skuMismatches([distributor()])).toEqual([]);
+  });
+});
+
+describe("distributorDataGaps", () => {
+  it("always names the unit problem on the order columns", () => {
+    const fields = distributorDataGaps([distributor()]).map((g) => g.field);
+    expect(fields).toContain("Orders Received / Shipped This Week");
+    expect(fields).toContain("Week ending");
+  });
+});
+
+describe("checkInDataGaps", () => {
+  it("reports how many check-ins tie to no door", () => {
+    const gap = checkInDataGaps([checkIn(), checkIn({ id: "b" })]).find(
+      (g) => g.field === "Account Name",
+    );
+    expect(gap?.detail).toContain("2 of 2");
+  });
+})

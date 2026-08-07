@@ -1,0 +1,24 @@
+{
+  "placeholder": true,
+  "sourceFile": "Weekly Distributor Inventory Report.xlsx",
+  "receivedOn": "2026-08-07",
+  "entries": [
+    {
+      "id": "di_1",
+      "completedBy": "John Doe",
+      "distributorName": "John Doe Buck Factory",
+      "dateCompleted": "2026-08-04",
+      "skusOnHand": ["Pineapple Coconut", "Summer Peach", "Lemon Mint"],
+      "casesOnHand": {
+        "Pineapple Coconut": 4,
+        "Summer Peach": 5,
+        "Lemon Mint": 6
+      },
+      "ordersReceived": 43,
+      "ordersShipped": 3,
+      "damaged": "No",
+      "damagedAmount": 0,
+      "notes": "no"
+    }
+  ]
+}

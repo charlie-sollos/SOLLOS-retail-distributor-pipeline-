@@ -1,0 +1,33 @@
+{
+  "placeholder": true,
+  "sourceFile": "Weekly Account Check-In.xlsx",
+  "receivedOn": "2026-08-07",
+  "entries": [
+    {
+      "id": "ac_1",
+      "accountManager": "John Doe",
+      "accountName": "John Doe's Big Bucks",
+      "dateCompleted": "2026-08-04",
+      "sku": "Pineapple Coconut",
+      "currentCases": 7,
+      "expectedReorderDate": "2026-08-19",
+      "expectedReorderCases": 9,
+      "stockoutRisk": "Low",
+      "promoComing": "Yes",
+      "notes": "No"
+    },
+    {
+      "id": "ac_2",
+      "accountManager": "Jane Doe",
+      "accountName": "Jane Doe's Small Bucks",
+      "dateCompleted": "2026-08-04",
+      "sku": "Pineapple Coconut",
+      "currentCases": 9,
+      "expectedReorderDate": "2026-08-25",
+      "expectedReorderCases": 3,
+      "stockoutRisk": "Low",
+      "promoComing": "No",
+      "notes": "no"
+    }
+  ]
+}
