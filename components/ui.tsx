@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SUN_GRID, SUN_ORANGE, SUN_YELLOW } from "@/components/sunPixels";
 import type { ReactNode } from "react";
 
 /** Page shell: consistent width, padding, and the main landmark. */
@@ -213,32 +214,31 @@ export function Meter({
 }
 
 /**
- * The brand sunburst, blocked out on a 32-unit grid.
+ * The brand sunburst, traced onto a pixel grid.
  *
  * The same drawing as the favicon, so the mark reads identically in a browser
- * tab and at watermark size on an empty state. Kept as rectangles rather than
- * the original bezier starburst: a curve softened at any size would be the one
- * thing on screen not made of pixels.
+ * tab, in the footer and at watermark size on an empty state. Drawn from the
+ * run data rather than shipped as a raster: it stays crisp at 14px in the
+ * footer and at 200px behind an empty state, from one source.
  */
 export function SunMark({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} shapeRendering="crispEdges" aria-hidden="true">
-    <g fill="#FFD100">
-      <rect x="14" y="0" width="4" height="8"/><rect x="14" y="24" width="4" height="8"/>
-      <rect x="0" y="14" width="8" height="4"/><rect x="24" y="14" width="8" height="4"/>
-      <rect x="6" y="6" width="4" height="4"/><rect x="22" y="6" width="4" height="4"/>
-      <rect x="6" y="22" width="4" height="4"/><rect x="22" y="22" width="4" height="4"/>
-      <rect x="11" y="3" width="2" height="5"/><rect x="19" y="3" width="2" height="5"/>
-      <rect x="11" y="24" width="2" height="5"/><rect x="19" y="24" width="2" height="5"/>
-      <rect x="3" y="11" width="5" height="2"/><rect x="3" y="19" width="5" height="2"/>
-      <rect x="24" y="11" width="5" height="2"/><rect x="24" y="19" width="5" height="2"/>
-      <rect x="10" y="8" width="12" height="16"/><rect x="8" y="10" width="16" height="12"/>
-    </g>
-    <g fill="#FF6B00">
-      <rect x="12" y="11" width="8" height="10"/><rect x="11" y="12" width="10" height="8"/>
-      <rect x="15" y="7" width="2" height="4"/><rect x="15" y="21" width="2" height="4"/>
-      <rect x="7" y="15" width="4" height="2"/><rect x="21" y="15" width="4" height="2"/>
-    </g>
+    <svg
+      viewBox={`0 0 ${SUN_GRID} ${SUN_GRID}`}
+      className={className}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      <g fill="#FFD100">
+        {SUN_YELLOW.map(([x, y, w]) => (
+          <rect key={`y${x},${y}`} x={x} y={y} width={w} height={1} />
+        ))}
+      </g>
+      <g fill="#FF6B00">
+        {SUN_ORANGE.map(([x, y, w]) => (
+          <rect key={`o${x},${y}`} x={x} y={y} width={w} height={1} />
+        ))}
+      </g>
     </svg>
   );
 }
