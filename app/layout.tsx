@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Silkscreen } from "next/font/google";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
@@ -14,12 +14,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * The pixel face, used for headings, labels and controls only.
+ *
+ * Deliberately never applied to a table cell or a figure: a pixel font renders
+ * every digit as a small mosaic, and a column of them is markedly slower to
+ * read than the sans. The look lives in the frame, the data stays legible.
+ */
+const pixel = Silkscreen({
+  variable: "--font-pixel-face",
+  weight: ["400", "700"],
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "SOLLOS Pipeline",
-    template: "%s | SOLLOS Pipeline",
+    default: "501105",
+    template: "%s | 501105",
   },
-  description: "SOLLOS retail and distributor pipeline tracker",
+  description: "501105, the SOLLOS retail and distributor ERP",
   // An internal ops tool. Even once it sits behind a login, it should never be
   // something a search engine has a copy of. Paired with app/robots.ts.
   robots: { index: false, follow: false, nocache: true },
@@ -33,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${pixel.variable} h-full antialiased`}
     >
       <body className="font-sans min-h-full flex flex-col">
         <a

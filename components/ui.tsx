@@ -24,7 +24,7 @@ export function PageTitle({
   return (
     <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h1 className="text-3xl font-semibold tracking-[-0.025em] text-sollos-navy sm:text-4xl">
+        <h1 className="pixel-face text-lg leading-snug text-sollos-navy sm:text-2xl">
           {title}
         </h1>
         {subtitle && <p className="mt-1.5 text-sm text-sollos-navy/60">{subtitle}</p>}
@@ -63,7 +63,7 @@ export function Stat({
 }) {
   return (
     <div className="card px-4 py-3.5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.09em] text-sollos-navy/50">
+      <p className="pixel-face text-[10px] uppercase tracking-[0.06em] text-sollos-navy/50">
         {label}
       </p>
       <p className="mt-1.5 flex items-baseline gap-1">
@@ -95,7 +95,7 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-full bg-sollos-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sollos-navy-dark disabled:opacity-50 ${className}`}
+      className={`pixel-btn bg-sollos-navy text-white transition-colors hover:bg-sollos-navy-dark disabled:opacity-50 ${className}`}
     >
       {children}
     </button>
@@ -115,7 +115,7 @@ export function GhostButton({
     <button
       type={type}
       onClick={onClick}
-      className="rounded-full border border-sollos-navy/20 px-3.5 py-2 text-sm font-medium text-sollos-navy/70 transition-colors hover:border-sollos-navy/40 hover:text-sollos-navy"
+      className="pixel-btn border-sollos-navy/30 bg-white text-sollos-navy/70 transition-colors hover:text-sollos-navy"
     >
       {children}
     </button>
@@ -126,7 +126,7 @@ export function PrimaryLink({ href, children }: { href: string; children: ReactN
   return (
     <Link
       href={href}
-      className="rounded-full bg-sollos-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sollos-navy-dark"
+      className="pixel-btn bg-sollos-navy text-white transition-colors hover:bg-sollos-navy-dark"
     >
       {children}
     </Link>
@@ -134,7 +134,7 @@ export function PrimaryLink({ href, children }: { href: string; children: ReactN
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-sollos-navy/15 bg-white px-3 py-2 text-sm text-sollos-navy placeholder:text-sollos-navy/35 focus:border-sollos-navy/40 focus:outline-none";
+  "w-full border-2 border-sollos-navy/15 bg-white px-3 py-2 text-sm text-sollos-navy placeholder:text-sollos-navy/35 focus:border-sollos-navy/40 focus:outline-none";
 
 export function Field({
   label,
@@ -197,8 +197,8 @@ export function Meter({
   const fill =
     tone === "good" ? "bg-sollos-good" : tone === "navy" ? "bg-sollos-navy" : "bg-sollos-orange";
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-sollos-navy/10">
-      <div className={`h-full rounded-full ${fill}`} style={{ width: `${pct}%` }} />
+    <div className="h-2 w-full overflow-hidden border-2 border-sollos-navy/12 bg-sollos-navy/8">
+      <div className={`h-full ${fill}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }

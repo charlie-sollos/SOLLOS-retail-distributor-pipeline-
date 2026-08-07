@@ -15,6 +15,22 @@
   --color-sollos-yellow: #ffd100; /* focus rings, the sun motif */
 
   --color-sollos-good: #0f7a4a; /* growing */
+
+  /* The pixel face. Headings, labels and controls only, never data. */
+  --font-pixel: var(--font-pixel-face);
+
+  /* Beach palette, read off the pixel art the overview is modelled on. Kept
+     separate from the brand palette above: these paint a scene, not a signal. */
+  --color-beach-sky-high: #1b8fc6;
+  --color-beach-sky-mid: #35abdb;
+  --color-beach-sky-low: #6ed0ee;
+  --color-beach-haze: #a9e8f7;
+  --color-beach-sea-deep: #0d97a8;
+  --color-beach-sea-mid: #15b4bb;
+  --color-beach-sea-low: #37cfc8;
+  --color-beach-foam: #eefcff;
+  --color-beach-sand: #f0ddb0;
+  --color-beach-sand-wet: #e0c68d;
 }
 
 body {
@@ -25,21 +41,22 @@ body {
 /* Surface tiers. Tier 1 is a raised card, tier 2 an inset panel.
    Never nest a bordered control directly inside a tier-1 card, use tier 2. */
 @utility card {
-  border-radius: var(--radius-2xl);
-  border: 1px solid color-mix(in srgb, var(--color-sollos-navy) 8%, transparent);
+  border-radius: 0;
+  border: 2px solid color-mix(in srgb, var(--color-sollos-navy) 14%, transparent);
   background: #fff;
-  box-shadow:
-    0 1px 2px rgba(0, 42, 83, 0.04),
-    0 8px 24px -12px rgba(0, 42, 83, 0.12);
+  /* A single hard offset instead of a soft drop: a blurred shadow is the one
+     thing that reads as un-pixel no matter what sits on top of it. */
+  box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--color-sollos-navy) 10%, transparent);
 }
 
 @utility panel {
-  border-radius: var(--radius-xl);
+  border-radius: 0;
   background: color-mix(in srgb, var(--color-sollos-sky) 40%, transparent);
 }
 
 /* Eyebrow label, used for section headings so they stop competing with the h1. */
 @utility eyebrow {
+  font-family: var(--font-pixel-face), var(--font-geist-sans), sans-serif;
   font-size: 0.6875rem;
   line-height: 1;
   font-weight: 600;
@@ -58,7 +75,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  border-radius: 9999px;
+  border-radius: 0;
   border: 1px solid color-mix(in srgb, var(--color-sollos-navy) 15%, transparent);
   background: #fff;
   padding: 0.4375rem 0.875rem;
@@ -78,4 +95,79 @@ body {
 *:focus-visible {
   outline: 2px solid var(--color-sollos-yellow);
   outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Pixel chrome                                                              */
+/*                                                                            */
+/*  The frame is pixel art, the data is not. Anything that carries a figure   */
+/*  keeps the sans face and normal rendering; borders, headings, controls and */
+/*  the beach get hard edges and a chunky offset shadow.                      */
+/* -------------------------------------------------------------------------- */
+
+/* Headings, labels and controls. Never a table cell. */
+@utility pixel-face {
+  font-family: var(--font-pixel-face), var(--font-geist-sans), sans-serif;
+  letter-spacing: 0;
+}
+
+/* A hard-edged surface: square corners, solid border, offset block shadow. */
+@utility pixel-edge {
+  border-radius: 0;
+  border: 2px solid var(--color-sollos-navy);
+  box-shadow: 4px 4px 0 0 color-mix(in srgb, var(--color-sollos-navy) 18%, transparent);
+}
+
+/* The same treatment at button scale, with a press that actually moves. */
+@utility pixel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0;
+  border: 2px solid var(--color-sollos-navy);
+  box-shadow: 3px 3px 0 0 var(--color-sollos-navy);
+  font-family: var(--font-pixel-face), var(--font-geist-sans), sans-serif;
+  font-size: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  transition:
+    transform 80ms steps(2),
+    box-shadow 80ms steps(2);
+
+  &:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 var(--color-sollos-navy);
+  }
+}
+
+/* Raster art must stay blocky when it is scaled, not get smoothed into mush. */
+@utility pixelated {
+  image-rendering: pixelated;
+}
+
+/* Foam rolls sideways in whole pixels. steps() is the point: a smooth slide
+   reads as a gradient sliding, a stepped one reads as pixel art moving. */
+@keyframes beach-foam {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: -64px;
+  }
+}
+
+@keyframes beach-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-120px);
+  }
+}
+
+/* Motion here is decoration. If the reader has asked for less of it, the scene
+   simply stops: nothing on the overview depends on it moving. */
+@media (prefers-reduced-motion: reduce) {
+  .beach-motion {
+    animation: none !important;
+  }
 }

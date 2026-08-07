@@ -14,10 +14,13 @@ import { pressingIssues, severityLabel, severityStyle } from "@/lib/attention";
 import { useWarehouseOverrides } from "@/lib/useWarehouseOverrides";
 import { DEFAULT_PRICING } from "@/lib/pricing";
 import { SalesChart } from "@/components/SalesChart";
+import { BarChart, type Bar } from "@/components/BarChart";
+import { Disclosure } from "@/components/Disclosure";
+import { PixelBeach } from "@/components/PixelBeach";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/Table";
+import { normalizeState } from "@/lib/locations";
 import {
   Page,
-  PageTitle,
   SectionHeading,
   Stat,
   Meter,
@@ -70,6 +73,44 @@ export function OverviewClient({ firstName }: { firstName: string }) {
   const stock = totalStock(effectiveWarehouses(warehouseOverrides), DEFAULT_PRICING.caseSize);
   const coverage = reorderCoverage(casesNeeded, stock);
 
+  // Two charts that read off figures already confirmed, rather than off the
+  // placeholder rows in the weekly reports. Footprint and warehouse stock are
+  // both real; production and distributor holdings are still sample data, so
+  // charting them here would put invented numbers on the first page anyone sees.
+  const doorsByState = useMemo<Bar[]>(() => {
+    const counts = new Map<string, number>();
+    for (const r of rows) {
+      if (r.channel !== "dsd") continue;
+      const state = normalizeState(r.loc.state) || "Unknown";
+      counts.set(state, (counts.get(state) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([state, n]) => ({
+        key: state,
+        label: state,
+        value: n,
+        display: `${n} ${n === 1 ? "door" : "doors"}`,
+      }));
+  }, [rows]);
+
+  const warehouseBars = useMemo<Bar[]>(
+    () =>
+      effectiveWarehouses(warehouseOverrides)
+        .slice()
+        .sort((a, b) => b.cases - a.cases)
+        .map((w) => ({
+          key: w.id,
+          label: w.name,
+          value: w.cases,
+          display: w.confirmed
+            ? w.cases.toLocaleString()
+            : `${w.cases.toLocaleString()} est.`,
+          provisional: !w.confirmed,
+        })),
+    [warehouseOverrides]
+  );
+
   const production = summarizeProduction(productionReport.entries);
   const awaitingReports = REPORTS.filter((r) => r.status === "awaiting").length;
 
@@ -92,12 +133,24 @@ export function OverviewClient({ firstName }: { firstName: string }) {
 
   return (
     <Page>
-      <PageTitle
-        title={firstName ? `Hi ${firstName}` : "Overview"}
-        subtitle="Retail and distributor footprint at a glance"
-      />
+      <PixelBeach>
+        <h1
+          className="pixel-face text-2xl text-white sm:text-4xl"
+          style={{ textShadow: "3px 3px 0 #002a53" }}
+        >
+          {firstName ? `Hi ${firstName}` : "Overview"}
+        </h1>
+        <p
+          className="pixel-face mt-3 max-w-md text-[10px] leading-relaxed text-white sm:text-xs"
+          style={{ textShadow: "2px 2px 0 #002a53" }}
+        >
+          Retail and distributor footprint at a glance
+        </p>
+      </PixelBeach>
 
-      <section className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      {/* The tiles sit on the sand rather than below the picture, so the header
+          reads as one object instead of a banner with a grid under it. */}
+      <section className="relative z-10 -mt-14 mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <Stat label="Live doors" value={doors.length} />
         <Stat
           label="Reporting"
@@ -117,20 +170,17 @@ export function OverviewClient({ firstName }: { firstName: string }) {
         />
       </section>
 
-      {/* Above everything: the reason to open this page on a Monday. */}
+      {/* Folded away by default. It stays the first thing on the page and keeps
+          its count on the button, so shutting it hides the detail, not the fact
+          that there is something waiting. */}
       {topIssues.length > 0 && (
-        <section className="mb-10">
-          <SectionHeading
-            action={
-              issues.length > topIssues.length ? (
-                <span className="text-xs text-sollos-navy/45">
-                  {issues.length - topIssues.length} more below
-                </span>
-              ) : undefined
-            }
-          >
-            Needs you now
-          </SectionHeading>
+        <Disclosure
+          id="needs-you-now"
+          title="NEEDS YOU NOW"
+          count={issues.length}
+          tone={topIssues.some((i) => i.severity === "high") ? "orange" : "navy"}
+          summary={topIssues[0].title}
+        >
           <ul className="space-y-2.5">
             {topIssues.map((issue) => (
               <li key={issue.id}>
@@ -149,7 +199,7 @@ export function OverviewClient({ firstName }: { firstName: string }) {
               </li>
             ))}
           </ul>
-        </section>
+        </Disclosure>
       )}
 
       {/* Named rather than folded in, so nobody reads a distributor pallet as shelf movement. */}
@@ -245,6 +295,28 @@ export function OverviewClient({ firstName }: { firstName: string }) {
           <SalesChart weeklySales={weeklySales} />
         </section>
       )}
+
+      <section className="mb-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="card p-5">
+          <SectionHeading>Where the doors are</SectionHeading>
+          <BarChart bars={doorsByState} tone="navy" />
+          <p className="mt-3 text-xs text-sollos-navy/45">
+            All {doors.length} live doors by state. Counts the shelf, not the sales: a state
+            with more doors is not necessarily selling more.
+          </p>
+        </div>
+
+        <div className="card p-5">
+          <SectionHeading>Cases on hand by warehouse</SectionHeading>
+          <BarChart bars={warehouseBars} tone="sea" />
+          <p className="mt-3 text-xs text-sollos-navy/45">
+            {stock.unconfirmedCases > 0
+              ? `Faded bars are estimates, ${stock.unconfirmedCases.toLocaleString()} cases of the ${stock.cases.toLocaleString()} total.`
+              : `All ${stock.cases.toLocaleString()} cases confirmed.`}{" "}
+            The reorder queue is asking for {casesNeeded}.
+          </p>
+        </div>
+      </section>
 
       <section className="mb-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Link href="/inventory" className="card block p-5 transition-colors hover:bg-white">

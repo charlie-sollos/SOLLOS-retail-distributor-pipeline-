@@ -6,6 +6,7 @@ export function Footer() {
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-sollos-navy/50 sm:flex-row sm:px-8">
         <p className="flex items-center gap-2">
           <SunMark className="h-3.5 w-3.5" />
+          <span className="pixel-face">501105</span>
           SOLLOS © 2026. All rights reserved.
         </p>
         <a

@@ -21,7 +21,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-sollos-navy/10 bg-sollos-cream/85 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3 sm:px-8">
-        <Link href="/" className="flex shrink-0 items-center" aria-label="SOLLOS home">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="501105 home">
           <Image
             src="/logo/sollos-wordmark.svg"
             alt="SOLLOS"
@@ -29,6 +29,10 @@ export function Header() {
             height={20}
             priority
           />
+          {/* The ERP's own name, kept beside the brand rather than replacing it. */}
+          <span className="pixel-face border-l-2 border-sollos-navy/15 pl-2.5 text-xs text-sollos-navy/70">
+            501105
+          </span>
         </Link>
         {/* Six tabs no longer fit a narrow window, so the nav scrolls sideways
             rather than clipping the last one off the edge. */}
@@ -71,8 +75,8 @@ export function Header() {
                 }
                 className={
                   active
-                    ? "shrink-0 whitespace-nowrap rounded-full bg-sollos-navy px-3 py-1.5 font-semibold text-white"
-                    : "shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-sollos-navy/65 transition-colors hover:bg-sollos-navy/6 hover:text-sollos-navy"
+                    ? "pixel-face shrink-0 whitespace-nowrap border-2 border-sollos-navy bg-sollos-navy px-2.5 py-1.5 text-[10px] text-white"
+                    : "pixel-face shrink-0 whitespace-nowrap border-2 border-transparent px-2.5 py-1.5 text-[10px] text-sollos-navy/65 transition-colors hover:border-sollos-navy/25 hover:text-sollos-navy"
                 }
               >
                 {link.label}
@@ -82,7 +86,7 @@ export function Header() {
           <form action="/api/auth/logout" method="POST" className="ml-1 shrink-0">
             <button
               type="submit"
-              className="whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-sollos-navy/45 transition-colors hover:bg-sollos-navy/6 hover:text-sollos-navy"
+              className="pixel-face whitespace-nowrap border-2 border-transparent px-2.5 py-1.5 text-[10px] text-sollos-navy/45 transition-colors hover:border-sollos-navy/25 hover:text-sollos-navy"
             >
               Sign out
             </button>

@@ -20,7 +20,7 @@ export default async function LoginPage({
       <div className="card relative w-full max-w-sm overflow-hidden p-7">
         <SunMark className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 opacity-[0.07]" />
         <div className="relative">
-          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-sollos-navy">Sign in</h1>
+          <h1 className="pixel-face text-xl text-sollos-navy">Sign in</h1>
           <p className="mt-1.5 text-sm text-sollos-navy/60">
             SOLLOS pipeline. Internal tool, team access only.
           </p>
@@ -54,7 +54,7 @@ export default async function LoginPage({
 
             <button
               type="submit"
-              className="w-full rounded-full bg-sollos-navy px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sollos-navy-dark"
+              className="pixel-btn w-full justify-center bg-sollos-navy text-white transition-colors hover:bg-sollos-navy-dark"
             >
               Sign in
             </button>
@@ -63,7 +63,7 @@ export default async function LoginPage({
           {message && (
             <p
               role="alert"
-              className="mt-4 rounded-xl border border-sollos-orange/30 bg-sollos-orange/8 px-3.5 py-2.5 text-sm text-sollos-navy"
+              className="mt-4 border-2 border-sollos-orange/40 bg-sollos-orange/8 px-3.5 py-2.5 text-sm text-sollos-navy"
             >
               {message}
             </p>
