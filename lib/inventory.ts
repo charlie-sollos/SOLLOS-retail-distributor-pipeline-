@@ -33,10 +33,59 @@ export type ProductionRun = {
   unitsAreCans: boolean | null;
 };
 
+/* -------------------------------------------------------------------------- */
+/*  Storage units                                                              */
+/*                                                                             */
+/*  A warehouse above is one number: cases. A rented storage unit is not, and  */
+/*  forcing it into one would mean inventing the two conversions the count     */
+/*  does not come with. So a unit is a list of lines, each carrying its own    */
+/*  measure, and the arithmetic stops wherever the measure runs out.           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Which recipe the stock is.
+ *
+ * "unknown" is not a placeholder to be tidied away later: some lines arrive
+ * without it, and an unlabelled tray is a real question for whoever counted
+ * rather than something to guess at. Old stock is not interchangeable with new.
+ */
+export type Formulation = "new" | "old" | "unknown";
+
+/** What a quantity is counted in. Only some of these convert to cans. */
+export type Measure = "pallet" | "tray" | "case" | "can";
+
+/** Cans in a tray, as stated on the count itself. */
+export const TRAY_CANS = 24;
+
+export type StorageLine = {
+  quantity: number;
+  measure: Measure;
+  formulation: Formulation;
+  /** A part pallet, 0 to 1. Absent means full. */
+  fill?: number;
+  note?: string;
+};
+
+export type StorageUnit = {
+  id: string;
+  /** The number on the door, e.g. "1216". */
+  unit: string;
+  lines: StorageLine[];
+};
+
+export type StorageSite = {
+  id: string;
+  name: string;
+  region: string;
+  countedOn: string;
+  units: StorageUnit[];
+};
+
 export type InventorySnapshot = {
   asOf: string;
   warehouses: Warehouse[];
   production: ProductionRun[];
+  storage: StorageSite[];
 };
 
 export const WAREHOUSE_STORAGE_KEY = "sollos:warehouse-cases";
@@ -114,6 +163,99 @@ export function totalStock(warehouses: Warehouse[], caseSize: number): StockTota
     unconfirmedCases: warehouses.filter((w) => !w.confirmed).reduce((sum, w) => sum + w.cases, 0),
   };
 }
+
+/**
+ * Cans on a line, or null when the measure does not convert.
+ *
+ * Null is the whole point. A pallet is a quantity of cases nobody has written
+ * down, and picking a plausible number would turn a known unknown into a
+ * confident figure that then gets added to a stock total and compared against
+ * what doors are asking for. Null propagates instead.
+ */
+export function cansForLine(line: StorageLine, caseSize: number): number | null {
+  switch (line.measure) {
+    case "can":
+      return line.quantity;
+    case "tray":
+      return line.quantity * TRAY_CANS;
+    case "case":
+      return line.quantity * caseSize;
+    case "pallet":
+      return null;
+  }
+}
+
+/** Whole pallets a line is worth, counting a part pallet as its fraction. */
+export function palletsForLine(line: StorageLine): number {
+  if (line.measure !== "pallet") return 0;
+  const fill = line.fill === undefined ? 1 : line.fill;
+  return line.quantity * fill;
+}
+
+export type StorageCount = {
+  /** Cans the measures actually resolve to. */
+  cans: number;
+  /** Pallet equivalents, which resolve to nothing until a pallet is defined. */
+  pallets: number;
+};
+
+const emptyCount = (): StorageCount => ({ cans: 0, pallets: 0 });
+
+export function countLines(lines: StorageLine[], caseSize: number): StorageCount {
+  return lines.reduce<StorageCount>(
+    (total, line) => ({
+      cans: total.cans + (cansForLine(line, caseSize) ?? 0),
+      pallets: total.pallets + palletsForLine(line),
+    }),
+    emptyCount()
+  );
+}
+
+export type StorageTotals = StorageCount & {
+  byFormulation: Record<Formulation, StorageCount>;
+  /** True while any line is sitting there without a recipe against it. */
+  hasUnlabelled: boolean;
+};
+
+export function summarizeStorage(units: StorageUnit[], caseSize: number): StorageTotals {
+  const lines = units.flatMap((u) => u.lines);
+  const forFormulation = (f: Formulation) =>
+    countLines(
+      lines.filter((l) => l.formulation === f),
+      caseSize
+    );
+
+  return {
+    ...countLines(lines, caseSize),
+    byFormulation: {
+      new: forFormulation("new"),
+      old: forFormulation("old"),
+      unknown: forFormulation("unknown"),
+    },
+    hasUnlabelled: lines.some((l) => l.formulation === "unknown"),
+  };
+}
+
+const MEASURE_NAMES: Record<Measure, [string, string]> = {
+  pallet: ["pallet", "pallets"],
+  tray: ["tray", "trays"],
+  case: ["case", "cases"],
+  can: ["can", "cans"],
+};
+
+/** "3 pallets", "1 pallet, about 70% full", "9 cans". */
+export function lineLabel(line: StorageLine): string {
+  const [one, many] = MEASURE_NAMES[line.measure];
+  const base = `${line.quantity.toLocaleString()} ${line.quantity === 1 ? one : many}`;
+  if (line.measure !== "pallet" || line.fill === undefined || line.fill >= 1) return base;
+  return `${base}, about ${Math.round(line.fill * 100)}% full`;
+}
+
+export const FORMULATION_LABELS: Record<Formulation, string> = {
+  new: "New formulation",
+  old: "Old formulation",
+  unknown: "Formulation not recorded",
+};
 
 export type CoverTone = "short" | "tight" | "ok";
 

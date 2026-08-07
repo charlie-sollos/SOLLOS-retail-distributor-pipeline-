@@ -3,11 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  FORMULATION_LABELS,
   effectiveWarehouses,
   inventory,
+  lineLabel,
   reorderCoverage,
   saveWarehouseCases,
+  summarizeStorage,
   totalStock,
+  type Formulation,
+  type StorageSite,
   type Warehouse,
 } from "@/lib/inventory";
 import { useWarehouseOverrides } from "@/lib/useWarehouseOverrides";
@@ -161,6 +166,10 @@ export default function InventoryPage() {
         <UnconfirmedNotes warehouses={warehouses} />
       </section>
 
+      {inventory.storage.map((site) => (
+        <StorageSiteSection key={site.id} site={site} caseSize={pricing.caseSize} />
+      ))}
+
       <section>
         <SectionHeading>Produced at 1820</SectionHeading>
         <Table caption="Production runs">
@@ -203,6 +212,122 @@ export default function InventoryPage() {
         for the case size these totals use.
       </p>
     </Page>
+  );
+}
+
+/** "10.7" but "10", so a whole number never carries a pointless decimal. */
+const tidy = (n: number) => (Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1));
+
+/**
+ * A rented storage site, counted line by line.
+ *
+ * Kept out of the totals at the top of this page on purpose. Most of what is
+ * standing in these units is on pallets, and nobody has said how many cases a
+ * pallet holds, so adding only the countable part would report a fraction of
+ * the site as though it were the whole of it, and the reorder coverage signal
+ * would quietly read low. Better a separate figure that is honest about where
+ * it stops.
+ */
+function StorageSiteSection({ site, caseSize }: { site: StorageSite; caseSize: number }) {
+  const totals = summarizeStorage(site.units, caseSize);
+  const order: Formulation[] = ["new", "old", "unknown"];
+  const rows = order.filter(
+    (f) => totals.byFormulation[f].cans > 0 || totals.byFormulation[f].pallets > 0
+  );
+
+  return (
+    <section className="mb-10">
+      <SectionHeading>{site.name}</SectionHeading>
+
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <Stat label="Pallets" value={tidy(totals.pallets)} hint="Cases per pallet unconfirmed" />
+        <Stat
+          label="Cans counted"
+          value={totals.cans.toLocaleString()}
+          hint={`${Math.floor(totals.cans / caseSize).toLocaleString()} cases and ${
+            totals.cans % caseSize
+          } loose`}
+        />
+        <Stat
+          label="Units"
+          value={site.units.length}
+          hint={site.units.map((u) => u.unit).join(", ")}
+        />
+        <Stat label="Counted" value={site.countedOn} hint={site.region} />
+      </div>
+
+      <Table caption={`What is standing at ${site.name}, by formulation`}>
+        <Thead>
+          <Th>Formulation</Th>
+          <Th align="right">Pallets</Th>
+          <Th align="right">Cans</Th>
+        </Thead>
+        <Tbody>
+          {rows.map((f) => (
+            <Tr key={f}>
+              <Td strong={f !== "unknown"} muted={f === "unknown"}>
+                {FORMULATION_LABELS[f]}
+              </Td>
+              <Td numeric>{tidy(totals.byFormulation[f].pallets)}</Td>
+              <Td numeric>{totals.byFormulation[f].cans.toLocaleString()}</Td>
+            </Tr>
+          ))}
+          <Tr>
+            <Td strong>Total</Td>
+            <Td numeric strong>
+              {tidy(totals.pallets)}
+            </Td>
+            <Td numeric strong>
+              {totals.cans.toLocaleString()}
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
+
+      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {site.units.map((unit) => (
+          <li key={unit.id} className="card p-4">
+            <p className="pixel-face text-[11px] text-sollos-navy">UNIT {unit.unit}</p>
+            <ul className="mt-2 space-y-1.5">
+              {unit.lines.map((line, i) => (
+                <li key={i} className="text-sm">
+                  <span className="font-semibold text-sollos-navy">{lineLabel(line)}</span>
+                  <span
+                    className={
+                      line.formulation === "unknown"
+                        ? "block text-xs text-sollos-orange"
+                        : "block text-xs text-sollos-navy/50"
+                    }
+                  >
+                    {FORMULATION_LABELS[line.formulation]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 space-y-2 text-xs text-sollos-navy/45">
+        <p className="max-w-2xl">
+          <span className="font-medium text-sollos-navy/60">Held out of the totals above.</span>{" "}
+          A tray is 24 cans and a case is {caseSize}, so those convert. A pallet does not:
+          nothing on the count says how many cases are on one, and at anything from 50 to 100
+          cases a guess would be the largest number on this page and the least reliable. Get
+          cases per pallet confirmed and this whole site turns into a real figure.
+        </p>
+        {totals.hasUnlabelled && (
+          <p className="max-w-2xl">
+            <span className="font-medium text-sollos-navy/60">
+              Some lines have no formulation.
+            </span>{" "}
+            The trays and loose cans in unit 1216 came through without saying whether they are
+            new or old, and the two are not interchangeable. Worth asking whoever walked the
+            units before any of it is promised to a door.
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 

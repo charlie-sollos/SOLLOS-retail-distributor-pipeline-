@@ -32,6 +32,39 @@
       "note": "Approximate. Awaiting confirmation from the Long Island team."
     }
   ],
+  "storage": [
+    {
+      "id": "site_fl_compass",
+      "name": "Florida Compass Storage",
+      "region": "Florida",
+      "countedOn": "2026-08-07",
+      "units": [
+        {
+          "id": "unit_1216",
+          "unit": "1216",
+          "lines": [
+            { "quantity": 3, "measure": "pallet", "formulation": "new" },
+            { "quantity": 1, "measure": "pallet", "formulation": "old", "fill": 0.7 },
+            { "quantity": 28, "measure": "tray", "formulation": "unknown" },
+            { "quantity": 9, "measure": "can", "formulation": "unknown" }
+          ]
+        },
+        {
+          "id": "unit_1205",
+          "unit": "1205",
+          "lines": [
+            { "quantity": 3, "measure": "pallet", "formulation": "new" },
+            { "quantity": 84, "measure": "case", "formulation": "old" }
+          ]
+        },
+        {
+          "id": "unit_1164",
+          "unit": "1164",
+          "lines": [{ "quantity": 4, "measure": "pallet", "formulation": "new" }]
+        }
+      ]
+    }
+  ],
   "production": [
     {
       "id": "prod_2026_05",

@@ -1,7 +1,7 @@
-import { displayName } from "@/lib/people";
+import { PEOPLE, displayName } from "@/lib/people";
 
 /**
- * A pixel bust, one per person, drawn from their email address.
+ * A pixel alien, one per person, drawn from their email address.
  *
  * Deterministic on purpose. Nothing about a person is stored anywhere, so the
  * address is the only input there is, and the same address has to produce the
@@ -10,16 +10,18 @@ import { displayName } from "@/lib/people";
  * face, which is the honest trade while there is no shared storage to keep a
  * choice in.
  *
- * Drawn as rects on a 12x12 grid rather than shipped as images: it stays crisp
- * at 20px next to a chat line and at 64px on a profile row, from one source,
- * and adding a fifth person costs nothing.
+ * Every colour comes from the brand and beach palettes, so a row of these still
+ * reads as SOLLOS rather than as a sticker sheet. Drawn as rects on a 12x12
+ * grid rather than shipped as images: it stays crisp at 20px next to a chat
+ * line and at 64px on a profile row, from one source, and adding a fifth person
+ * costs nothing.
  */
 
 /**
  * The three heads, as character grids.
  *
- *   .  nothing    o  outline    h  hair
- *   s  skin       e  eye        t  shirt
+ *   .  nothing    o  outline    s  skin
+ *   e  eye        t  shirt      b  antenna tip
  *
  * Every row is exactly GRID characters wide. They are drawn out in full rather
  * than generated so that the faces can be adjusted by looking at them.
@@ -27,65 +29,67 @@ import { displayName } from "@/lib/people";
 const GRID = 12;
 
 const HEADS: string[][] = [
-  // Cropped.
+  // Two antennae, narrow skull.
   [
-    "....oooo....",
-    "..oohhhhoo..",
-    ".ohhhhhhhho.",
-    ".ohhhhhhhho.",
-    ".ohssssssho.",
+    "..bb....bb..",
+    "...o....o...",
+    "...oooooo...",
+    "..osssssso..",
     ".osssssssso.",
+    ".osssssssso.",
+    ".oeeesseeeo.",
     ".oseesseeso.",
-    ".osssssssso.",
     "..osssssso..",
     "...oossoo...",
     ".otttttttto.",
     "otttttttttto",
   ],
-  // Long, framing the face.
+  // One antenna, wide skull.
   [
-    "....oooo....",
-    "..oohhhhoo..",
-    ".ohhhhhhhho.",
-    "ohhhhhhhhhho",
-    "ohhsssssshho",
-    "ohssssssssho",
-    "ohseesseesho",
-    "ohssssssssho",
-    "ohhsssssshho",
-    ".hhoossoohh.",
+    ".....bb.....",
+    ".....o......",
+    "..oooooooo..",
+    ".osssssssso.",
+    "osssssssssso",
+    "osssssssssso",
+    "oeeesssseeeo",
+    ".oeesssseeo.",
+    ".osssssssso.",
+    "...oossoo...",
     ".otttttttto.",
     "otttttttttto",
   ],
-  // Swept back, no sides.
+  // No antennae, tall dome.
   [
-    "...oooooo...",
-    "..ohhhhhho..",
-    ".ohhhhhhhho.",
-    ".ohhhhhhhho.",
+    "....oooo....",
+    "..oossssoo..",
     ".osssssssso.",
     ".osssssssso.",
-    ".oseesseeso.",
+    "osssssssssso",
+    "osssssssssso",
+    "oeeesssseeeo",
+    ".oeesssseeo.",
     ".osssssssso.",
-    "..osssssso..",
     "...oossoo...",
     ".otttttttto.",
     "otttttttttto",
   ],
 ];
 
-/** Sunglasses replace the eye row wholesale. It is a beach brand. */
-const SHADES_ROW = 6;
-const SHADES = ".oggggggggo.";
+/** A visor over both eye rows. It is a beach brand, even in orbit. */
+const VISOR_ROWS = [6, 7];
+const VISOR = [".oggggggggo.", ".osggggggso."];
 
-const OUTLINE = "#002a53";
+const OUTLINE = "#002a53"; // brand navy, the only line colour anywhere
 const EYE = "#002a53";
 const LENS = "#0a1f33";
 
-const SKINS = ["#ffdbac", "#f3c9a0", "#e0a878", "#c1784b", "#8d5524", "#5c3317"];
-const HAIRS = ["#2b1b12", "#5a3a22", "#a9772f", "#e8c66a", "#b4443c", "#7a7a86"];
-/** Shirts come from the brand palette, so a row of avatars still reads as SOLLOS. */
-const SHIRTS = ["#002a53", "#00616c", "#ff6b00", "#0f7a4a", "#1b8fc6", "#ffd100"];
+/** Skins off the brand teals, greens and the beach sea. */
+const SKINS = ["#15b4bb", "#37cfc8", "#00616c", "#0f7a4a", "#35abdb", "#ffd100"];
+/** Shirts off the brand palette, so a row of avatars still reads as SOLLOS. */
+const SHIRTS = ["#002a53", "#ff6b00", "#00616c", "#1b8fc6", "#ffd100", "#0f7a4a"];
+/** The antenna tip, always one of the two warm brand colours. */
+const TIPS = ["#ffd100", "#ff6b00"];
 
 /** FNV-1a. Small, stable across runtimes, and enough to spread five addresses. */
 function hash(value: string): number {
@@ -99,30 +103,93 @@ function hash(value: string): number {
 
 /**
  * Each trait is hashed from the address plus its own name rather than from
- * different bits of one hash, so hair colour and shirt colour cannot end up
- * correlated across the roster.
+ * different bits of one hash, so skin and shirt cannot end up correlated
+ * across the roster.
  */
 function trait(email: string, name: string, count: number): number {
   return hash(`${email.trim().toLowerCase()}:${name}`) % count;
 }
 
 export type AvatarLook = {
-  head: string[];
+  headIndex: number;
   skin: string;
-  hair: string;
   shirt: string;
-  shades: boolean;
+  tip: string;
+  visor: boolean;
 };
 
-export function lookFor(email: string): AvatarLook {
+function computeLook(email: string, variant: number): AvatarLook {
+  // Variant 0 keeps the plain salts, so adding the de-duplication below did not
+  // change the face of anybody who was not colliding.
+  const salt = (name: string) => (variant === 0 ? name : `${name}#${variant}`);
+
+  const skin = SKINS[trait(email, salt("skin"), SKINS.length)];
+  const shirtIndex = trait(email, salt("shirt"), SHIRTS.length);
+
+  // Teal appears in both palettes, so an unlucky pair would put a teal shirt
+  // under a teal head and lose the shoulders entirely. Step along until they
+  // differ rather than dropping the colour from one of the lists.
+  let shirt = SHIRTS[shirtIndex];
+  for (let i = 1; shirt === skin && i < SHIRTS.length; i++) {
+    shirt = SHIRTS[(shirtIndex + i) % SHIRTS.length];
+  }
+
   return {
-    head: HEADS[trait(email, "head", HEADS.length)],
-    skin: SKINS[trait(email, "skin", SKINS.length)],
-    hair: HAIRS[trait(email, "hair", HAIRS.length)],
-    shirt: SHIRTS[trait(email, "shirt", SHIRTS.length)],
-    // One in four, so shades stay a detail you notice rather than the house style.
-    shades: trait(email, "shades", 4) === 0,
+    headIndex: trait(email, salt("head"), HEADS.length),
+    skin,
+    shirt,
+    tip: TIPS[trait(email, salt("tip"), TIPS.length)],
+    // One in four, so a visor stays a detail you notice rather than the uniform.
+    visor: trait(email, salt("visor"), 4) === 0,
   };
+}
+
+/**
+ * What makes two aliens read as the same alien.
+ *
+ * Head and skin only. Those two carry almost the whole silhouette at 20px, and
+ * two people who differ by nothing but the colour of their shoulders are two
+ * people nobody can tell apart in a chat log.
+ */
+function silhouette(look: AvatarLook): string {
+  return `${look.headIndex}|${look.skin}`;
+}
+
+/**
+ * Hashing each person independently is not enough on a roster this small.
+ * Charlie and Dillon landed on the same head, the same skin and the same shirt,
+ * which on a four-person team is not a rare collision, it is a quarter of the
+ * company sharing a face.
+ *
+ * So the roster is resolved once, in order: anyone whose silhouette is already
+ * taken gets rehashed under the next variant until it is not. PEOPLE comes from
+ * ALLOWED_EMAILS and is identical in every browser, so this lands on the same
+ * answer everywhere, which is the property that actually matters.
+ */
+const rosterLooks: Map<string, AvatarLook> = (() => {
+  const taken = new Set<string>();
+  const looks = new Map<string, AvatarLook>();
+
+  for (const person of PEOPLE) {
+    let variant = 0;
+    let look = computeLook(person.email, variant);
+    // Bounded so a palette smaller than the roster cannot spin here forever.
+    while (taken.has(silhouette(look)) && variant < 32) {
+      look = computeLook(person.email, ++variant);
+    }
+    taken.add(silhouette(look));
+    looks.set(person.email, look);
+  }
+  return looks;
+})();
+
+/**
+ * Anyone off the roster, such as an address left on an old message, keeps the
+ * plain hash. There is nobody to collide with in a list they are not in.
+ */
+export function lookFor(email: string): AvatarLook {
+  const key = email.trim().toLowerCase();
+  return rosterLooks.get(key) ?? computeLook(key, 0);
 }
 
 type Run = { x: number; y: number; width: number; fill: string };
@@ -136,14 +203,15 @@ function runsFor(look: AvatarLook): Run[] {
     o: OUTLINE,
     e: EYE,
     g: LENS,
-    h: look.hair,
     s: look.skin,
     t: look.shirt,
+    b: look.tip,
   };
 
   const runs: Run[] = [];
-  look.head.forEach((row, y) => {
-    const cells = look.shades && y === SHADES_ROW ? SHADES : row;
+  HEADS[look.headIndex].forEach((row, y) => {
+    const visorRow = look.visor ? VISOR_ROWS.indexOf(y) : -1;
+    const cells = visorRow === -1 ? row : VISOR[visorRow];
     let x = 0;
     while (x < GRID) {
       const char = cells[x];

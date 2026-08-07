@@ -57,6 +57,7 @@ export function AlertsClient() {
         }
       />
 
+      <SignedInAs email={me} />
       <LocalOnlyNotice />
 
       {unreadMentions.length > 0 && (
@@ -148,7 +149,59 @@ export function AlertsClient() {
           <AssignmentList rows={doneLately} />
         </Disclosure>
       )}
+
+      <SignOut />
     </Page>
+  );
+}
+
+/**
+ * Whose alerts these are, said in full.
+ *
+ * The header shows a face and a number, which is enough to press but not enough
+ * to answer "am I signed in as me?". Four people share one password, so landing
+ * on somebody else's session is a real way to end up assigning work from the
+ * wrong name. The address is spelled out rather than shortened to a first name
+ * for exactly that reason.
+ */
+function SignedInAs({ email }: { email: string | null }) {
+  if (!email) return null;
+  return (
+    <div className="card mb-8 flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
+      <PixelAvatar email={email} size={40} label={`Your avatar, ${displayName(email)}`} />
+      <div className="min-w-0">
+        <p className="pixel-face text-[10px] uppercase tracking-[0.06em] text-sollos-navy/50">
+          Signed in as
+        </p>
+        <p className="mt-1 break-all text-sm font-semibold text-sollos-navy">{email}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * At the bottom, where it cannot be hit by accident.
+ *
+ * It used to sit in the nav next to seven things people press all day, which is
+ * a lot of exposure for an action that throws away an hour of unsaved local
+ * work and is wanted about once a month.
+ */
+function SignOut() {
+  return (
+    <div className="mt-12 border-t-2 border-sollos-navy/10 pt-6">
+      <form action="/api/auth/logout" method="POST">
+        <button
+          type="submit"
+          className="pixel-btn border-sollos-navy/30 bg-white text-sollos-navy/70 transition-colors hover:border-sollos-navy hover:text-sollos-navy"
+        >
+          Sign out
+        </button>
+      </form>
+      <p className="mt-2.5 max-w-lg text-xs text-sollos-navy/45">
+        Signing out does not clear anything: assignments and chat stay in this browser
+        until somebody clears the browser&rsquo;s own storage.
+      </p>
+    </div>
   );
 }
 

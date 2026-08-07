@@ -93,14 +93,6 @@ export function Header() {
                   </Link>
                 );
               })}
-              <form action="/api/auth/logout" method="POST" className="shrink-0">
-                <button
-                  type="submit"
-                  className="pixel-face whitespace-nowrap border-2 border-transparent px-2.5 py-1.5 text-[10px] text-sollos-navy/45 transition-colors hover:border-sollos-navy/25 hover:text-sollos-navy"
-                >
-                  Sign out
-                </button>
-              </form>
             </nav>
 
             <AlertsButton active={pathname.startsWith("/alerts")} />
@@ -112,11 +104,12 @@ export function Header() {
 }
 
 /**
- * The count of what is waiting for you, pinned where it cannot scroll away.
+ * Your own face, the count of what is waiting, and the way to your account.
  *
  * Renders zero as a quiet outline rather than disappearing, so the way to your
- * alerts is always in the same place. Your own avatar sits inside it, which is
- * the only spot in the app that says whose alerts these are.
+ * alerts is always in the same place. Signing out lives on the other end of
+ * this button rather than in the nav: it is a once-a-month action that was
+ * sitting next to seven things people press all day.
  */
 function AlertsButton({ active }: { active: boolean }) {
   const me = useCurrentUser();
@@ -129,9 +122,10 @@ function AlertsButton({ active }: { active: boolean }) {
       : "border-sollos-navy/20 bg-white text-sollos-navy/55 hover:border-sollos-navy/45";
 
   const label =
-    total === 0
-      ? "Alerts, nothing waiting"
-      : `Alerts, ${total} waiting${overdue.length > 0 ? `, ${overdue.length} overdue` : ""}`;
+    (total === 0
+      ? "Your alerts, nothing waiting"
+      : `Your alerts, ${total} waiting${overdue.length > 0 ? `, ${overdue.length} overdue` : ""}`) +
+    (me ? `. Signed in as ${displayName(me)}` : "");
 
   return (
     <Link
@@ -142,7 +136,6 @@ function AlertsButton({ active }: { active: boolean }) {
     >
       {me && <PixelAvatar email={me} size={20} />}
       <span className="pixel-face text-[10px] leading-none">{total > 0 ? total : "-"}</span>
-      <span className="sr-only">{me ? `signed in as ${displayName(me)}` : ""}</span>
     </Link>
   );
 }
