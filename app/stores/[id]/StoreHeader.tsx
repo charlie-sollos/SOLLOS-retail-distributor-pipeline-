@@ -106,11 +106,11 @@ export function StoreHeader({ store }: { store: StoreLocation }) {
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {channelOf(store) !== "dsd" && (
-            <span className="rounded-full bg-sollos-navy/8 px-2.5 py-1 text-xs font-medium text-sollos-navy/60">
+            <span className=" bg-sollos-navy/8 badge text-sollos-navy/60">
               {CHANNEL_LABELS[channelOf(store)]}
             </span>
           )}
-          <span className="rounded-full bg-sollos-good/12 px-2.5 py-1 text-xs font-medium text-sollos-good">
+          <span className=" bg-sollos-good/12 badge text-sollos-good">
             Live
           </span>
         </div>

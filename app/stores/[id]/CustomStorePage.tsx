@@ -35,7 +35,7 @@ export function CustomStorePage({ id }: { id: string }) {
         </p>
         <Link
           href="/pipeline"
-          className="mt-2 rounded-full bg-sollos-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sollos-navy-dark"
+          className="pixel-btn mt-2 bg-sollos-navy text-white transition-colors hover:bg-sollos-navy-dark"
         >
           Back to pipeline
         </Link>

@@ -171,3 +171,16 @@ body {
     animation: none !important;
   }
 }
+
+/* A status pill, now a status block. The border follows the text colour so a
+   tone only has to be set once, on the element. */
+@utility badge {
+  display: inline-block;
+  border-radius: 0;
+  border: 2px solid currentColor;
+  font-family: var(--font-pixel-face), var(--font-geist-sans), sans-serif;
+  font-size: 0.625rem;
+  line-height: 1;
+  padding: 0.3125rem 0.4375rem;
+  white-space: nowrap;
+}

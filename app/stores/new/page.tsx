@@ -156,7 +156,7 @@ export default function NewStorePage() {
         </div>
 
         {possibleDuplicate && (
-          <p className="mt-4 rounded-xl border border-sollos-orange/30 bg-sollos-orange/8 px-3.5 py-2.5 text-sm text-sollos-navy">
+          <p className="mt-4 border-2 border-sollos-orange/30 bg-sollos-orange/8 px-3.5 py-2.5 text-sm text-sollos-navy">
             <span className="font-medium">Possible duplicate.</span>{" "}
             <Link
               href={`/stores/${possibleDuplicate.id}`}

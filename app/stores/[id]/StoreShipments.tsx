@@ -113,7 +113,7 @@ export function StoreShipments({ storeId }: { storeId: string }) {
         action={
           last ? (
             <span
-              className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
+              className={`badge ${
                 signal.stale
                   ? "bg-sollos-orange/12 text-sollos-orange"
                   : "bg-sollos-sky text-sollos-navy"
@@ -173,7 +173,7 @@ export function StoreShipments({ storeId }: { storeId: string }) {
       )}
 
       {restock && (
-        <p className={`mb-5 rounded-xl px-4 py-3 text-sm font-medium ${restockToneStyle[restock.tone]}`}>
+        <p className={`mb-5 px-4 py-3 text-sm font-medium ${restockToneStyle[restock.tone]}`}>
           {restock.label}
           <span className="ml-1 font-normal opacity-75">
             (~{restock.onHandUnits} cans on hand, est.)

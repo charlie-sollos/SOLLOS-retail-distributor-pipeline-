@@ -127,12 +127,12 @@ export default function InventoryPage() {
                 </Td>
                 <Td>
                   {w.confirmed ? (
-                    <span className="rounded-full bg-sollos-good/12 px-2.5 py-1 text-xs font-medium text-sollos-good">
+                    <span className=" bg-sollos-good/12 badge text-sollos-good">
                       Confirmed
                     </span>
                   ) : (
                     <span
-                      className="rounded-full bg-sollos-orange/12 px-2.5 py-1 text-xs font-medium text-sollos-orange"
+                      className=" bg-sollos-orange/12 badge text-sollos-orange"
                       title={w.note}
                     >
                       Estimate

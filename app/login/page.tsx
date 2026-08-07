@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { SunMark, inputClass } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -16,7 +17,18 @@ export default async function LoginPage({
   const message = error ? (MESSAGES[error] ?? MESSAGES.invalid) : null;
 
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-16">
+    <div className="flex flex-1 items-center justify-center gap-10 px-6 py-16">
+      {/* The product, at the door. Dropped on narrow screens rather than shrunk
+          to a thumbnail nobody can read. */}
+      <Image
+        src="/art/pixel-can.png"
+        alt="A can of SOLLOS yerba mate, pineapple and coconut"
+        width={239}
+        height={712}
+        unoptimized
+        priority
+        className="pixelated hidden h-72 w-auto drop-shadow-[5px_5px_0_rgba(0,42,83,0.18)] lg:block"
+      />
       <div className="card relative w-full max-w-sm overflow-hidden p-7">
         <SunMark className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 opacity-[0.07]" />
         <div className="relative">

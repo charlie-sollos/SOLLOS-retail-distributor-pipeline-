@@ -146,7 +146,7 @@ export default function ProductionReportPage() {
                     <Td strong>{e.completedBy}</Td>
                     <Td>
                       <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
+                        className={`badge ${
                           e.status === "Running"
                             ? "bg-sollos-good/12 text-sollos-good"
                             : "bg-sollos-orange/12 text-sollos-orange"

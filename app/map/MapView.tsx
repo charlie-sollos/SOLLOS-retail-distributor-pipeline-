@@ -65,7 +65,7 @@ export function MapView({
       bounds={initialBounds}
       boundsOptions={{ padding: [30, 30] }}
       scrollWheelZoom
-      className="h-[65vh] w-full overflow-hidden rounded-2xl border border-sollos-navy/10"
+      className="h-[65vh] w-full overflow-hidden border border-sollos-navy/10"
     >
       <FitBounds locations={locations} focusLoc={focusLoc} />
       <TileLayer

@@ -186,14 +186,14 @@ export function PipelinePageClient() {
                         <span className="text-[10px] text-sollos-navy/45">cans/day</span>
                       </p>
                     ) : (
-                      <span className="shrink-0 rounded-full border border-dashed border-sollos-orange/50 px-2.5 py-1 text-xs font-medium text-sollos-orange">
+                      <span className="shrink-0 badge text-sollos-orange">
                         Add data
                       </span>
                     )}
                   </div>
                   {row.entries.length > 0 && (
                     <span
-                      className={`mt-2.5 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[row.signal.tone]}`}
+                      className={`mt-2.5 badge ${toneStyle[row.signal.tone]}`}
                     >
                       {row.signal.label}
                     </span>
@@ -224,7 +224,7 @@ export function PipelinePageClient() {
                         {row.loc.name}
                       </Link>
                       {row.channel !== "dsd" && (
-                        <span className="ml-2 rounded-full bg-sollos-navy/8 px-2 py-0.5 text-[11px] font-medium text-sollos-navy/60">
+                        <span className="ml-2 bg-sollos-navy/8 badge text-sollos-navy/60">
                           {CHANNEL_LABELS[row.channel]}
                         </span>
                       )}
@@ -239,13 +239,13 @@ export function PipelinePageClient() {
                       {row.entries.length === 0 ? (
                         <Link
                           href={`/stores/${row.loc.id}`}
-                          className="inline-block rounded-full border border-dashed border-sollos-navy/25 px-2.5 py-1 text-xs font-medium text-sollos-navy/60 transition-colors hover:border-sollos-orange hover:bg-sollos-orange/8 hover:text-sollos-orange"
+                          className="badge text-sollos-navy/60 transition-colors hover:border-sollos-orange hover:bg-sollos-orange/8 hover:text-sollos-orange"
                         >
                           Add data
                         </Link>
                       ) : (
                         <span
-                          className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[row.signal.tone]}`}
+                          className={`badge ${toneStyle[row.signal.tone]}`}
                         >
                           {row.signal.label}
                         </span>
@@ -280,7 +280,7 @@ function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={label}
-        className="rounded-xl border border-sollos-navy/15 bg-white px-2.5 py-1.5 text-sm font-normal text-sollos-navy focus:border-sollos-navy/40 focus:outline-none"
+        className="border-2 border-sollos-navy/15 bg-white px-2.5 py-1.5 text-sm font-normal text-sollos-navy focus:border-sollos-navy/40 focus:outline-none"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SunMark } from "@/components/ui";
 
 /**
  * The pixel beach behind the overview header.
@@ -49,28 +50,6 @@ const CLOUD =
     </svg>`,
   );
 
-/** The brand sun, blocked out so it belongs to the same scene. */
-function PixelSun() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="absolute right-6 top-5 h-12 w-12 sm:right-10 sm:h-16 sm:w-16"
-      shapeRendering="crispEdges"
-      aria-hidden="true"
-    >
-      <g fill="#ffd100">
-        <rect x="8" y="4" width="8" height="16" />
-        <rect x="4" y="8" width="16" height="8" />
-        <rect x="6" y="6" width="12" height="12" />
-      </g>
-      <g fill="#ff6b00">
-        <rect x="10" y="8" width="4" height="8" />
-        <rect x="8" y="10" width="8" height="4" />
-      </g>
-    </svg>
-  );
-}
-
 export function PixelBeach({ children }: { children: ReactNode }) {
   return (
     <div className="pixel-edge relative mb-8 overflow-hidden bg-beach-sky-mid">
@@ -95,7 +74,7 @@ export function PixelBeach({ children }: { children: ReactNode }) {
       />
 
       <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
-        <PixelSun />
+        <SunMark className="absolute right-6 top-5 h-12 w-12 sm:right-10 sm:h-16 sm:w-16" />
 
         {/* Clouds drift far slower than the foam, which is what sells the depth. */}
         <div

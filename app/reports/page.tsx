@@ -44,7 +44,7 @@ export default function ReportsPage() {
               >
                 <p className="font-semibold text-sollos-navy/70">{r.title}</p>
                 <p className="mt-1.5 text-sm text-sollos-navy/50">{r.purpose}</p>
-                <span className="mt-3 inline-block rounded-full bg-sollos-navy/8 px-2.5 py-1 text-xs font-medium text-sollos-navy/55">
+                <span className="mt-3 inline-block bg-sollos-navy/8 badge text-sollos-navy/55">
                   Waiting on the spreadsheet
                 </span>
               </li>

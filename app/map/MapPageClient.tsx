@@ -81,7 +81,7 @@ export function MapPageClient() {
           value={stateFilter}
           onChange={(e) => setStateFilter(e.target.value)}
           aria-label="Filter by state"
-          className="rounded-xl border border-sollos-navy/15 bg-white px-2.5 py-2 text-sm text-sollos-navy focus:border-sollos-navy/40 focus:outline-none"
+          className="border-2 border-sollos-navy/15 bg-white px-2.5 py-2 text-sm text-sollos-navy focus:border-sollos-navy/40 focus:outline-none"
         >
           {states.map((s) => (
             <option key={s} value={s}>
@@ -103,7 +103,7 @@ export function MapPageClient() {
           {byState.map(([s, n]) => (
             <span
               key={s}
-              className="num rounded-full bg-sollos-sky/60 px-2.5 py-1 text-xs font-medium text-sollos-navy"
+              className="num bg-sollos-sky/60 badge text-sollos-navy"
             >
               {s} {n}
             </span>

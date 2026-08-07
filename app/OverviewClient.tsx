@@ -236,7 +236,7 @@ export function OverviewClient({ firstName }: { firstName: string }) {
               </div>
               <Link
                 href="/pipeline?data=Needs%20Data"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-sollos-orange px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sollos-orange/85"
+                className="pixel-btn mt-4 bg-sollos-orange text-white transition-colors hover:bg-sollos-orange/85"
               >
                 Log data for {needsData.length} {needsData.length === 1 ? "door" : "doors"}
                 <span aria-hidden="true">→</span>
@@ -411,7 +411,7 @@ export function OverviewClient({ firstName }: { firstName: string }) {
                   <Td numeric>{row.casesPerWeek}</Td>
                   <Td>
                     <span
-                      className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[row.signal.tone]}`}
+                      className={`badge ${toneStyle[row.signal.tone]}`}
                     >
                       {row.signal.label}
                     </span>

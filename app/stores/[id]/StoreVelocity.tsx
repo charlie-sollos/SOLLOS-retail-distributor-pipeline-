@@ -132,7 +132,7 @@ export function StoreVelocity({ storeId }: { storeId: string }) {
       <SectionHeading
         action={
           <span
-            className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${toneStyle[signal.tone]}`}
+            className={`badge ${toneStyle[signal.tone]}`}
           >
             {signal.label}
           </span>

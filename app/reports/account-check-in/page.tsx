@@ -146,7 +146,7 @@ export default function AccountCheckInPage() {
                     <Td strong>
                       {e.accountName}
                       {matchedDoorId(e.accountName) === null && (
-                        <span className="ml-2 rounded-full bg-sollos-navy/8 px-2 py-0.5 text-[11px] font-medium text-sollos-navy/55">
+                        <span className="ml-2 bg-sollos-navy/8 badge text-sollos-navy/55">
                           no matching door
                         </span>
                       )}
@@ -160,7 +160,7 @@ export default function AccountCheckInPage() {
                     <Td numeric>{e.expectedReorderCases}</Td>
                     <Td>
                       <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${riskClass(e.stockoutRisk)}`}
+                        className={`badge ${riskClass(e.stockoutRisk)}`}
                       >
                         {e.stockoutRisk}
                       </span>

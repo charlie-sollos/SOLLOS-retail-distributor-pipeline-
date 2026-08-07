@@ -39,6 +39,6 @@ export const config = {
    * public on purpose: a crawler that cannot read it cannot obey it.
    */
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|icon.svg|robots.txt|logo/).*)",
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|icon.svg|robots.txt|logo/|art/).*)",
   ],
 };
